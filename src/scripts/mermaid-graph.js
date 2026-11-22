@@ -51,7 +51,7 @@ function attachPanZoom(stage, canvas, svg) {
     // 文字可读优先：宽高都放得下就铺满，放不下时保留可读比例，交给拖动查看。
     const widthFit = (rect.width - padding * 2) / width
     const heightFit = (560 - padding * 2) / height
-    scale = clamp(Math.min(widthFit, heightFit), 0.7, 1)
+    scale = clamp(Math.min(widthFit, heightFit), 0.4, 1)
     const scaledWidth = width * scale
     const scaledHeight = height * scale
 
@@ -228,8 +228,8 @@ export async function initMermaidGraphs() {
       curve: 'basis',
       useMaxWidth: false,
       htmlLabels: true,
-      nodeSpacing: 28,
-      rankSpacing: 48,
+      nodeSpacing: 24,
+      rankSpacing: 44,
       padding: 16
     }
   })

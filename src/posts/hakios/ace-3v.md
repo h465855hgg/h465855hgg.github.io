@@ -46,18 +46,20 @@ fastboot boot
 
 ```mermaid
 flowchart LR
-  F("fastboot boot") --> B("BootShim")
-  B --> U("UEFI")
-  U --> L("loader.efi")
-  L --> X("XNU")
-  X --> D("Darwin 用户态")
-  D --> S("SpringBoard")
+  F("fastboot boot") --> B("BootShim<br/>FD → 0xA7100000<br/>payload → 0xF0000000")
+  B --> U("UEFI · Mu-Silicium<br/>SM7675 / cliffs<br/>平台包 + 厂商 DXE")
+  U --> L("loader.efi<br/>DTB · boot_args<br/>PSCI 拉起 8 核")
+  L --> X("XNU<br/>GICv3 · 8 核<br/>md0 根分区")
+  X --> D("Darwin 用户态<br/>launchd · backboardd<br/>libhakios 注入")
+  D --> S("SpringBoard<br/>iOS 16.5<br/>1240 × 2772")
+  L -.->|RPMh 供电| T("触摸 S3910<br/>ldob22 · ldom5<br/>bit-bang SPI")
+  T -.->|/dev/hakios-touch| X
   classDef cmd fill:#1d2940,stroke:#5e7eff,stroke-width:2px,color:#eaf0ff
   classDef hot fill:#2a1f2b,stroke:#ff9eb6,stroke-width:2px,color:#ffeaf1
   classDef plain fill:#161c26,stroke:#3d4a5c,stroke-width:1.5px,color:#e6ebf2
   class F cmd
   class S hot
-  class B,U,L,X,D plain
+  class B,U,L,X,D,T plain
 ```
 
 ## 准备
