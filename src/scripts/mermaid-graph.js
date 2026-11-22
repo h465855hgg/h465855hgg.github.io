@@ -8,6 +8,7 @@ const MIN_SCALE = 0.25
 const MAX_SCALE = 3
 
 let mermaidPromise = null
+const views = []
 
 function loadMermaid() {
   if (window.mermaid) return Promise.resolve(window.mermaid)
@@ -129,7 +130,7 @@ function buildBlock(svgMarkup) {
 
   const title = document.createElement('span')
   title.className = 'graph-title'
-  title.textContent = '流程图'
+  title.textContent = '结构图'
 
   const actions = document.createElement('div')
   actions.className = 'graph-actions'
@@ -152,7 +153,7 @@ function buildBlock(svgMarkup) {
   return { block, actions, stage, canvas }
 }
 
-function addControls(actions, view) {
+function addControls(actions, view, block) {
   const make = (label, handler, ariaLabel) => {
     const button = document.createElement('button')
     button.type = 'button'
@@ -166,6 +167,10 @@ function addControls(actions, view) {
   make('−', () => view.zoomAtCenter(1 / 1.25), '缩小')
   make('复位', () => view.fit(), '复位视图')
   make('+', () => view.zoomAtCenter(1.25), '放大')
+  make('全屏', () => {
+    if (document.fullscreenElement) document.exitFullscreen()
+    else if (block.requestFullscreen) block.requestFullscreen()
+  }, '全屏查看')
 }
 
 function readSource(pre) {
@@ -189,11 +194,21 @@ async function renderBlock(mermaid, pre, index) {
 
   const svgElement = canvas.querySelector('svg')
   if (!svgElement) return
-  svgElement.removeAttribute('height')
+
+  // Mermaid marks the element with width="100%"; pin it to its viewBox so the
+  // pan/zoom maths always work on the intrinsic size.
+  const box = svgElement.viewBox && svgElement.viewBox.baseVal
+  if (box && box.width && box.height) {
+    svgElement.setAttribute('width', String(box.width))
+    svgElement.setAttribute('height', String(box.height))
+    svgElement.style.width = `${box.width}px`
+    svgElement.style.height = `${box.height}px`
+  }
   svgElement.style.maxWidth = 'none'
 
   const view = attachPanZoom(stage, canvas, svgElement)
-  addControls(actions, view)
+  views.push(view)
+  addControls(actions, view, block)
   view.fit()
 }
 
@@ -212,17 +227,29 @@ export async function initMermaidGraphs() {
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: 'loose',
-    theme: 'base',
+    theme: 'default',
     fontFamily: "'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif",
     themeVariables: {
       background: '#0f1218',
-      primaryColor: '#161c26',
-      primaryTextColor: '#e6ebf2',
-      primaryBorderColor: '#3d4a5c',
-      lineColor: '#4a5768',
-      secondaryColor: '#1b2430',
-      tertiaryColor: '#11161f',
-      fontSize: '14px'
+      primaryColor: '#e8edf7',
+      primaryTextColor: '#10151d',
+      primaryBorderColor: '#8d9bb0',
+      lineColor: '#7f8ea3',
+      secondaryColor: '#dbe3f0',
+      tertiaryColor: '#c9d3e3',
+      fontSize: '15px',
+      cScale0: '#bcd0ff',
+      cScale1: '#bde8c9',
+      cScale2: '#ffd9b3',
+      cScale3: '#dcc6ff',
+      cScale4: '#b8e6f5',
+      cScale5: '#ffc7d5',
+      cScale6: '#d6dde8',
+      cScale7: '#c9e8dd',
+      cScale8: '#e8dcc0',
+      cScale9: '#c2d8f2',
+      cScale10: '#e3c9d6',
+      cScale11: '#cfe3c2'
     },
     flowchart: {
       curve: 'basis',
@@ -233,6 +260,13 @@ export async function initMermaidGraphs() {
       padding: 16
     }
   })
+
+  if (!document.documentElement.dataset.graphFullscreen) {
+    document.documentElement.dataset.graphFullscreen = '1'
+    document.addEventListener('fullscreenchange', () => {
+      for (const view of views) view.fit()
+    })
+  }
 
   let index = 0
   for (const pre of blocks) {

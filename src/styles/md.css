@@ -629,3 +629,16 @@ article:not(.blog-post-container) a:hover:after {
   display: block;
   background: transparent;
 }
+
+.graph-block:fullscreen {
+  border: 0;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  background: #0f1218;
+}
+
+.graph-block:fullscreen .graph-stage {
+  flex: 1;
+  height: auto;
+}

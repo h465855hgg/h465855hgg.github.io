@@ -45,21 +45,30 @@ fastboot boot
 上述链路对应的节点图（可拖动平移、滚轮缩放）：
 
 ```mermaid
-flowchart LR
-  F("fastboot boot") --> B("BootShim<br/>FD → 0xA7100000<br/>payload → 0xF0000000")
-  B --> U("UEFI · Mu-Silicium<br/>SM7675 / cliffs<br/>平台包 + 厂商 DXE")
-  U --> L("loader.efi<br/>DTB · boot_args<br/>PSCI 拉起 8 核")
-  L --> X("XNU<br/>GICv3 · 8 核<br/>md0 根分区")
-  X --> D("Darwin 用户态<br/>launchd · backboardd<br/>libhakios 注入")
-  D --> S("SpringBoard<br/>iOS 16.5<br/>1240 × 2772")
-  L -.->|RPMh 供电| T("触摸 S3910<br/>ldob22 · ldom5<br/>bit-bang SPI")
-  T -.->|/dev/hakios-touch| X
-  classDef cmd fill:#1d2940,stroke:#5e7eff,stroke-width:2px,color:#eaf0ff
-  classDef hot fill:#2a1f2b,stroke:#ff9eb6,stroke-width:2px,color:#ffeaf1
-  classDef plain fill:#161c26,stroke:#3d4a5c,stroke-width:1.5px,color:#e6ebf2
-  class F cmd
-  class S hot
-  class B,U,L,X,D,T plain
+mindmap
+  root((HakiOS · Ace 3V))
+    准备 PC 侧
+      hakios-kernel 14.8 MB
+      loader.efi
+      SILICIUM_UEFI.fd
+      system.apfs 2.36 GB
+    引导链
+      fastboot boot
+      BootShim 0xA7100000
+      UEFI SM7675
+      loader.efi DTB PSCI
+    内核
+      XNU
+      GICv3 8 核
+      md0 根分区
+    触摸
+      S3910 TCM
+      供电 ldob22 ldom5
+      bit-bang SPI
+    用户态
+      launchd.darwin
+      backboardd
+      SpringBoard 16.5
 ```
 
 ## 准备
