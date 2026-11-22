@@ -8,12 +8,37 @@
 }
 
 /* 宽内容在文章栏内滚动，不撑宽整个页面。 */
-.markdown-body table,
 .markdown-body .katex-display,
 .markdown-body pre {
   display: block;
   max-width: 100%;
   overflow-x: auto;
+}
+
+/* 表格：保持表格布局，只允许内容换行 */
+.markdown-body table {
+  width: 100%;
+  margin: 1.2rem 0;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.markdown-body th,
+.markdown-body td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown-body thead th {
+  background: var(--bg-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.markdown-body tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--bg-secondary) 55%, transparent);
 }
 
 .markdown-body iframe,
