@@ -642,3 +642,48 @@ article:not(.blog-post-container) a:hover:after {
   flex: 1;
   height: auto;
 }
+
+/* 结构图（mindmap）节点与连线 */
+.mm-box {
+  fill: #151c27;
+  stroke: #2b3648;
+  stroke-width: 1.2;
+}
+
+.mm-depth-0 .mm-box {
+  fill: #1a2436;
+  stroke-width: 1.6;
+}
+
+.mm-depth-2 .mm-box {
+  fill: #111823;
+  stroke: #26313f;
+}
+
+.mm-label {
+  fill: #c3cfdf;
+  font-family: 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.mm-depth-1 .mm-label {
+  fill: #e3ebf6;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mm-depth-0 .mm-label {
+  fill: #eef3ff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mm-edge {
+  fill: none;
+  stroke-width: 1.4;
+}
+
+.mm-edge-root {
+  stroke-width: 1.8;
+  opacity: 0.8;
+}

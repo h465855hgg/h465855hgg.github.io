@@ -44,8 +44,7 @@ fastboot boot
 
 上述链路对应的节点图（可拖动平移、滚轮缩放）：
 
-```mermaid
-mindmap
+```mindmap
   root((HakiOS · Ace 3V))
     准备 PC 侧
       hakios-kernel 14.8 MB
