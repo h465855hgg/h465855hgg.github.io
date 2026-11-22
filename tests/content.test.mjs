@@ -33,6 +33,14 @@ const contentModule = await sourceModule('src/utils/content.ts', {
   './helpers': helpersModule.url
 })
 
+// Expected URLs follow the configured deployment origin instead of a fixed domain,
+// so the suite keeps passing when site.config.ts points at another account or host.
+const siteOrigin = escapeRegExp(new URL(siteConfig.site).origin)
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 function withBase(t, base) {
   const previous = siteConfig.base
   siteConfig.base = base
@@ -120,9 +128,9 @@ test('sitemap contains nested directories and tags without repeating deployment 
     '@/config/site.config': configUrl
   })
   const xml = await (await sitemap.exports.GET()).text()
-  assert.match(xml, /https:\/\/huamurui.github.io\/blog\/posts\/tech\/nested\/a\//)
-  assert.match(xml, /https:\/\/huamurui.github.io\/blog\/posts\/tech\/nested\//)
-  assert.match(xml, /https:\/\/huamurui.github.io\/blog\/tags\/C%2B%2B\//)
+  assert.match(xml, new RegExp(`${siteOrigin}/blog/posts/tech/nested/a/`))
+  assert.match(xml, new RegExp(`${siteOrigin}/blog/posts/tech/nested/`))
+  assert.match(xml, new RegExp(`${siteOrigin}/blog/tags/C%2B%2B/`))
   assert.doesNotMatch(xml, /\/blog\/blog\//)
   assert.match(xml, /href="\/blog\/sitemap.xsl"/)
   assert.doesNotMatch(xml, /sasayai/i)
@@ -141,8 +149,8 @@ test('theme RSS and robots advertise the configured nonempty deployment base', a
   })
   const response = await rssModule.exports.GET({ site: new URL(siteConfig.site) })
   const xml = await response.text()
-  assert.match(xml, /<link>https:\/\/huamurui.github.io\/pudding\/<\/link>/)
-  assert.match(xml, /https:\/\/huamurui.github.io\/pudding\/posts\/tech\/test\//)
+  assert.match(xml, new RegExp(`<link>${siteOrigin}/pudding/</link>`))
+  assert.match(xml, new RegExp(`${siteOrigin}/pudding/posts/tech/test/`))
   assert.match(xml, /href="\/pudding\/rss.xsl"/)
   assert.match(xml, /<language>en-us<\/language>/)
   const robotsModule = await sourceModule('src/pages/robots.txt.ts', {
@@ -150,7 +158,7 @@ test('theme RSS and robots advertise the configured nonempty deployment base', a
     '@/utils/helpers': helpersModule.url
   })
   const robots = await robotsModule.exports.GET({ site: new URL(siteConfig.site) })
-  assert.match(await robots.text(), /Sitemap: https:\/\/huamurui.github.io\/pudding\/sitemap.xml/)
+  assert.match(await robots.text(), new RegExp(`Sitemap: ${siteOrigin}/pudding/sitemap.xml`))
 })
 
 test('JSON-LD serialization preserves text without exposing HTML script delimiters', async() => {

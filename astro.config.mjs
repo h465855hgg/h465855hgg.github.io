@@ -1,17 +1,17 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
-import { unified } from '@astrojs/markdown-remark';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import remarkSpoiler from './src/plugin/remark-spoiler.js';
-import remarkLinkPreview from './src/plugin/remark-link-preview.js';
-import remarkPostLinks from './src/plugin/remark-post-links.js';
-import remarkImageOptimize from './src/plugin/remark-image-optimize.js';
+import { defineConfig } from 'astro/config'
+import { unified } from '@astrojs/markdown-remark'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
+import remarkSpoiler from './src/plugin/remark-spoiler.js'
+import remarkLinkPreview from './src/plugin/remark-link-preview.js'
+import remarkPostLinks from './src/plugin/remark-post-links.js'
+import remarkImageOptimize from './src/plugin/remark-image-optimize.js'
 
-import svelte from '@astrojs/svelte';
-import expressiveCode from 'astro-expressive-code';
-import path from 'path';
-import { siteConfig } from "./src/config/site.config.ts";
+import svelte from '@astrojs/svelte'
+import expressiveCode from 'astro-expressive-code'
+import path from 'path'
+import { siteConfig } from "./src/config/site.config.ts"
 
 export default defineConfig({
   site: siteConfig.site,
@@ -44,12 +44,12 @@ export default defineConfig({
       themeCssSelector: (theme) => {
         // 将我们的主题切换值映射到 Expressive Code 主题
         if (theme.name === 'tokyo-night') {
-          return '[data-theme="dark"]';
+          return '[data-theme="dark"]'
         }
         if (theme.name === 'one-light') {
-          return '[data-theme="light"]';
+          return '[data-theme="light"]'
         }
-        return false;
+        return false
       },
       // 使用暗色模式媒体查询
       useDarkModeMediaQuery: true,
@@ -72,4 +72,4 @@ export default defineConfig({
       },
     },
   },
-});
+})
