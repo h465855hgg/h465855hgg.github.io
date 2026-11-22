@@ -42,6 +42,24 @@ fastboot boot
                   └─ 用户态  Darwin root.apfs / system.apfs → launchd → backboardd → SpringBoard
 ```
 
+上述链路对应的节点图（可拖动平移、滚轮缩放）：
+
+```mermaid
+flowchart LR
+  F("fastboot boot") --> B("BootShim")
+  B --> U("UEFI")
+  U --> L("loader.efi")
+  L --> X("XNU")
+  X --> D("Darwin 用户态")
+  D --> S("SpringBoard")
+  classDef cmd fill:#1d2940,stroke:#5e7eff,stroke-width:2px,color:#eaf0ff
+  classDef hot fill:#2a1f2b,stroke:#ff9eb6,stroke-width:2px,color:#ffeaf1
+  classDef plain fill:#161c26,stroke:#3d4a5c,stroke-width:1.5px,color:#e6ebf2
+  class F cmd
+  class S hot
+  class B,U,L,X,D plain
+```
+
 ## 准备
 
 以下产物需在主机上各构建一次：
@@ -123,5 +141,3 @@ DEVICE=cliffs-ace3v XL_CMDLINE="touchscreen=2 cpus=8 bootcpu=0" ./xl run
 
 - 项目仓库：https://github.com/oosexgang/hakios-xnu-kernel
 - 上游 UEFI 基座：Mu-Silicium
-
-![HakiOS 启动流程](/images/hakios-ios-boot-mindmap.png)
