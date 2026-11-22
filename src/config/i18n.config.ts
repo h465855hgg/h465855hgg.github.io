@@ -91,7 +91,7 @@ export interface I18nConfig {
 export const i18nConfig = {
   'zh-CN': {
     common: {
-      brand: 'Pudding',
+      brand: 'rrzt',
       comments: {
         title: '评论',
         loading: '正在加载评论…',
@@ -181,7 +181,7 @@ export const i18nConfig = {
   },
   'en-US': {
     common: {
-      brand: 'Pudding',
+      brand: 'rrzt',
       comments: {
         title: 'Comments',
         loading: 'Loading comments…',

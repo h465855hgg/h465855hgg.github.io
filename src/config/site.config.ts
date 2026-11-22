@@ -53,16 +53,16 @@ export interface SiteConfig {
 }
 
 export const siteConfig: SiteConfig = {
-  name: "Site Name",
-  description: "Site Description",
+  name: "rrzt",
+  description: "rrzt 的个人博客：记录技术、学习与日常。",
   url: "https://h465855hgg.github.io/",
   site: "https://h465855hgg.github.io/",
   base: "/",
-  keywords: ["astro", "blog", "theme", "pudding"],
+  keywords: ["rrzt", "blog", "astro", "pudding"],
   author: {
-    name: "Your Name",
-    email: "your@email.com",
-    github: "https://github.com/your",
+    name: "rrzt",
+    github: "https://github.com/h465855hgg",
+    avatar: "https://github.com/h465855hgg.png",
   },
   navItems: [
     { href: "./", labelKey: "home", label:"home" },
@@ -70,8 +70,7 @@ export const siteConfig: SiteConfig = {
     { href: "./about", labelKey: "about", label:"about"  },
   ],
   socialLinks: [
-    { nameKey: "social.github", href: "https://github.com/your" },
-    { nameKey: "social.email", href: "mailto:your@email.com" },
+    { nameKey: "social.github", href: "https://github.com/h465855hgg" },
     { nameKey: "social.rss", href: "./rss.xml" },
     { nameKey: "social.sitemap", href: "./sitemap.xml" },
   ],
@@ -83,7 +82,7 @@ export const siteConfig: SiteConfig = {
       primary: "#ff9eb6",
     },
   },
-  locale: "en-US",
+  locale: "zh-CN",
   giscus: {
     enabled: false,
     repo: "your-repo/your-repo",

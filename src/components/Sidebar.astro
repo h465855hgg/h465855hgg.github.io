@@ -43,7 +43,7 @@ allBlogPosts.map((post) => {
 
 <div class="profile-sidebar">
   <div class="profile-avatar">
-    <!-- <img src="/avatar.jpg" alt="你的昵称" class="avatar-img" /> -->
+    <img src={siteConfig.author.avatar ?? '/avatar.jpg'} alt={siteConfig.author.name} class="avatar-img" />
   </div>
   <h3 class="profile-name">{siteConfig.author.name}</h3>
   <p class="profile-intro">{intro}</p>

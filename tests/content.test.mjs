@@ -10,6 +10,7 @@ import remarkLinkPreview, { fetchTextLimited } from '../src/plugin/remark-link-p
 import remarkImageOptimize from '../src/plugin/remark-image-optimize.js'
 import remarkPostLinks from '../src/plugin/remark-post-links.js'
 import { siteConfig } from '../src/config/site.config.ts'
+import { getLocale } from '../src/config/i18n.config.ts'
 
 // Execute the actual TypeScript sources with their Astro aliases resolved, without a bundler.
 async function sourceModule(path, imports = {}) {
@@ -152,7 +153,7 @@ test('theme RSS and robots advertise the configured nonempty deployment base', a
   assert.match(xml, new RegExp(`<link>${siteOrigin}/pudding/</link>`))
   assert.match(xml, new RegExp(`${siteOrigin}/pudding/posts/tech/test/`))
   assert.match(xml, /href="\/pudding\/rss.xsl"/)
-  assert.match(xml, /<language>en-us<\/language>/)
+  assert.match(xml, new RegExp(`<language>${getLocale(siteConfig.locale).toLowerCase()}</language>`))
   const robotsModule = await sourceModule('src/pages/robots.txt.ts', {
     '@/config/site.config': configUrl,
     '@/utils/helpers': helpersModule.url
