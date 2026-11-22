@@ -55,9 +55,9 @@ export interface SiteConfig {
 export const siteConfig: SiteConfig = {
   name: "Site Name",
   description: "Site Description",
-  url: "https://huamurui.github.io/pudding/",
-  site: "https://huamurui.github.io",
-  base: "/pudding",
+  url: "https://h465855hgg.github.io/",
+  site: "https://h465855hgg.github.io/",
+  base: "/",
   keywords: ["astro", "blog", "theme", "pudding"],
   author: {
     name: "Your Name",
