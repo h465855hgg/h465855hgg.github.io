@@ -49,10 +49,10 @@ allBlogPosts.map((post) => {
   <p class="profile-intro">{intro}</p>
 
   <!-- 社交链接 -->
-  <!-- <div class="profile-social">
-    <a href="https://github.com/xxx" aria-label="GitHub">🔗</a>
-    <a href="mailto:xxx@xxx.com" aria-label="邮箱">📧</a>
-  </div> -->
+  <div class="profile-social">
+    <a href={siteConfig.author.github} aria-label="GitHub" target="_blank" rel="noopener noreferrer">🔗</a>
+    <a href="./rss.xml" aria-label="RSS">📡</a>
+  </div>
 
   <div class="profile-stats">
     <div class="stat-item">📝 {allBlogPosts.length} {t('sidebar.stats.posts')}</div>
@@ -79,5 +79,19 @@ allBlogPosts.map((post) => {
     height: 80px;
     border-radius: 80px;
     object-fit: cover;
+  }
+  .profile-social {
+    display: flex;
+    gap: 12px;
+    margin: 6px 0;
+    font-size: 1.05rem;
+  }
+  .profile-social a {
+    text-decoration: none;
+    opacity: 0.75;
+    transition: opacity 0.2s ease;
+  }
+  .profile-social a:hover {
+    opacity: 1;
   }
 </style>
