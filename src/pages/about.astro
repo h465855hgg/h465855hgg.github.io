@@ -1,8 +1,8 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro'
-import '@/styles/global.css'
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import "@/styles/global.css";
 
-const pageTitle = 'About';
+const pageTitle = "About";
 ---
 
 <BaseLayout pageTitle={pageTitle}>
@@ -10,47 +10,49 @@ const pageTitle = 'About';
     <!-- Header -->
     <header class="about-hero">
       <div class="ambient-glow"></div>
-      <h1 class="title">rrzt <span class="sub-title">/ h465855hgg</span></h1>
-      <p class="tagline">写代码，也写点别的。</p>
-      <p class="poetic-intro">
-        "慢慢来，比较快。"
-      </p>
+      <h1 class="title">
+        rrzt <span class="sub-title">/ h465855hgg</span>
+      </h1>
+      <p class="tagline">写代码，也写点别的</p>
+      <p class="poetic-intro">"我不知道"</p>
       <p class="poetic-intro2">
-        这里是 rrzt 的个人博客。 <br/>
-        记录技术笔记、学习过程，以及偶尔的胡思乱想。 <br/>
-        如果某篇内容刚好帮到你，那就太好了。
+        这里是 rrzt 的个人博客 <br />
+        记录技术笔记、学习过程，以及偶尔的胡思乱想
+        <br />
+        如果某篇内容刚好帮到你，那就太好了
       </p>
     </header>
 
     <!-- Main content - conversational style -->
     <div class="about-body">
-
       <section class="about-section">
         <p>
-          这个站点用 <a href="https://astro.build" class="preview-link">Astro</a> 构建，主题是 <a href="https://github.com/huamurui/pudding" class="preview-link">Pudding</a>。
+          这个站点用{" "}
+          <a href="https://astro.build" class="preview-link">
+            Astro
+          </a>{" "}
+          构建，主题是{" "}
+          <a href="https://github.com/huamurui/pudding" class="preview-link">
+            Pudding
+          </a>
+          。
         </p>
-        <p>
-          写博客的理由很简单：把散落在笔记和聊天记录里的东西，整理成能被检索、被引用的样子。
-        </p>
+        <p>写博客的理由很简单：把散落在笔记和聊天记录里的东西，整理成能被检索、被引用的样子</p>
       </section>
 
       <div class="divider">· · ·</div>
 
       <section class="about-section">
-        <p>
-          目前主要会写这些方向：
-        </p>
+        <p>目前主要会写这些方向：</p>
         <p>
           <span class="list-label">1.</span>
-          编程与工具：踩过的坑、配置和脚本。
+          编程与工具：踩过的坑、配置和脚本
         </p>
         <p>
           <span class="list-label">2.</span>
-          学习记录：读过的东西，以及自己的理解。
+          学习记录：读过的东西，以及自己的理解
         </p>
-        <p class="aside-block">
-          如果发现内容有误，欢迎在 GitHub 上提 issue 或者直接告诉我。
-        </p>
+        <p class="aside-block">如果发现内容有误，欢迎在 GitHub 上提 issue 或者直接告诉我</p>
       </section>
 
       <div class="divider">· · ·</div>
@@ -63,13 +65,16 @@ const pageTitle = 'About';
           <span class="tool-tag">Svelte</span>
         </div>
       </section>
-
     </div>
 
     <!-- Footer -->
     <footer class="about-footer">
       <p>
-        博客基于 <a href="https://github.com/huamurui/pudding" class="theme-link">Pudding</a> 主题构建。
+        博客基于{" "}
+        <a href="https://github.com/huamurui/pudding" class="theme-link">
+          Pudding
+        </a>{" "}
+        主题构建。
       </p>
       <p class="copyright">© 2026 rrzt. Made with 🤍 and lots of daydreaming.</p>
     </footer>
