@@ -174,8 +174,8 @@ journalctl --user -u umbriel-sidekey -f
 
 ## 参考
 
-- [Umbriel 配置](https://docs.noctalia.dev/umbriel/configuration/)
-- [Umbriel 动作列表](https://docs.noctalia.dev/umbriel/actions/)
-- [Umbriel 键位](https://docs.noctalia.dev/umbriel/keybinds/)
-- [Noctalia 与 Umbriel 集成](https://docs.noctalia.dev/noctalia/compositor-settings/umbriel)
-- [Noctalia IPC](https://docs.noctalia.dev/noctalia/ipc/shell/)
+- [Umbriel 配置](https://docs.noctalia.dev/umbriel/configuration/)：TOML 全部选项与热重载规则
+- [Umbriel 动作列表](https://docs.noctalia.dev/umbriel/actions/)：键位可绑定的全部动作名
+- [Umbriel 键位](https://docs.noctalia.dev/umbriel/keybinds/)：chord 语法、子映射、热角
+- [Noctalia 与 Umbriel 集成](https://docs.noctalia.dev/noctalia/compositor-settings/umbriel)：推荐设置组合
+- [Noctalia IPC](https://docs.noctalia.dev/noctalia/ipc/shell/)：`noctalia msg` 全部命令
