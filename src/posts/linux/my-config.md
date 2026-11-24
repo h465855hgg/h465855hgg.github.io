@@ -68,7 +68,7 @@ umbriel msg config-reload
 | `input.cursor` | `Bibata-Modern-Classic`，24 |
 | `hot_corners.top_left` | `delay_ms = 0` |
 | `appearance` | `corner_radius = 12`、`border_width = 0`（对齐 Niri 的无边框） |
-| `appearance.blur` | `radius = 10`、`passes = 3`（包里默认 3，太淡） |
+| `appearance.blur` | `radius = 6`、`passes = 2`（包里默认 3，太淡；10 又过头） |
 | `layout` | `gap = 16`、`scrolling.default_extent_fraction = 0.5` |
 | `[[window_rule]]` | Noctalia 设置窗浮动 1080×920；Zed 实时模糊；ghostty 缓存壁纸模糊 |
 | `[keybinds]` | 152 条 |
