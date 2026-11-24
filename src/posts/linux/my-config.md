@@ -71,6 +71,7 @@ umbriel msg config-reload
 | `appearance.blur` | `radius = 6`、`passes = 2`（包里默认 3，太淡；10 又过头） |
 | `layout` | `gap = 16`、`scrolling.default_extent_fraction = 0.5` |
 | `[[window_rule]]` | Noctalia 设置窗浮动 1080×920；Zed 实时模糊；ghostty 缓存壁纸模糊 |
+| `[effects]` | `cursor = "glow"`，shader 在 `~/.config/umbriel/shaders/community/cursor/glow/` |
 | `[keybinds]` | 152 条 |
 
 `~/.local/bin/noctalia-gpu`：
