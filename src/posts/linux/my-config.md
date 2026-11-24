@@ -16,7 +16,6 @@ tags: [Linux, Fedora, Wayland, Umbriel, Noctalia, dotfiles]
 | 显示 | RTX 4060 Laptop，2560×1600 |
 | 会话 | greetd → noctalia-greeter → Umbriel / Niri |
 | 键盘 | `us,cn`，`altgr-pinyin` |
-| dotfiles | chezmoi，远端 `h465855hgg/dotfiles` |
 
 ## 更新
 
@@ -48,7 +47,6 @@ sudo dnf swap noctalia-greeter-git noctalia-greeter   # 可选：换稳定版 gr
 | `~/.config/fcitx5/`、`~/.config/environment.d/` | 输入法与会话变量 |
 | `~/.local/bin/` | 自用脚本 |
 | `~/.config/systemd/user/` | 用户单元 |
-| `~/.local/share/chezmoi/` | dotfiles 源仓库 |
 | `~/.config/dconf/user` | GTK/GNOME 设置 |
 
 校验与重载：
@@ -151,26 +149,18 @@ spawn-at-startup "/home/rrzt/.local/bin/x11-to-wayland-clipboard"
 - `umbriel-sidekey`：鼠标侧键转窗口浮动
 - `noctalia-watchdog`：Niri 下守护 shell
 - `x11-to-wayland-clipboard`：剪贴板桥
-- `dotbackup`、`chezmoi`：备份与版本管理
 
 用户单元：`umbriel-sidekey`、`msime-linux-clipboard`、`appimagelauncherd`、`wireplumber`、`obex`。
 
 ## 备份
 
-chezmoi 源目录 `~/.local/share/chezmoi`，管理 784 个文件。
+配置没有用 dotfiles 工具管理，`~/.config` 下的文件就是源，改前手动复制一份。
 
-```bash
-chezmoi add ~/.config/niri/config.kdl
-chezmoi diff && chezmoi apply
-chezmoi update
-```
-
-已纳管：Niri、ghostty、fcitx5、environment.d。未纳管：`~/.config/umbriel/config.toml`、`~/.zshrc`、Noctalia 设置。
-
-GTK/GNOME 设置单独导出：
+GTK 与 GNOME 的设置不在文件里，单独导出：
 
 ```bash
 dconf dump / > ~/.config/dconf-backup-$(date +%F).txt
+dconf load / < ~/.config/dconf-backup-2026-11-24.txt
 ```
 
 ## 已知问题
