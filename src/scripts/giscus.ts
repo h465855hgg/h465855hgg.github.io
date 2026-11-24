@@ -154,8 +154,11 @@ export function mountGiscus(
       fail()
       return
     }
-    if (typeof data.resizeHeight !== 'number' || !Number.isFinite(data.resizeHeight) || data.resizeHeight <= 0) return
-    iframe.style.height = `${data.resizeHeight}px`
+    if (typeof data.resizeHeight === 'number' && Number.isFinite(data.resizeHeight) && data.resizeHeight > 0) {
+      iframe.style.height = `${data.resizeHeight}px`
+    } else if (!/Discussion not found/i.test(error)) {
+      return
+    }
     if (ready) return
     ready = true
     window.clearTimeout(timeout)

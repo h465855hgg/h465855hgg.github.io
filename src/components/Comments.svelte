@@ -80,12 +80,12 @@
   .comments-embed :global(iframe) {
     display: block;
     width: 100%;
-    height: 150px;
+    height: 350px;
     border: 0;
-    visibility: hidden;
+    opacity: 0;
   }
 
   .comments-embed.ready :global(iframe) {
-    visibility: visible;
+    opacity: 1;
   }
 </style>
