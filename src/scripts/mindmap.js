@@ -7,12 +7,16 @@
 //     分支 B
 //   ```
 //
-// Two-space indentation defines the hierarchy. The root sits in the middle,
-// the first level splits between both sides, and deeper levels stack outward.
+// Two-space indentation defines the hierarchy. Wide containers use the
+// horizontal layout: the root sits in the middle and the first level splits
+// between both sides. Narrow containers (phones) use a vertical layout: the
+// root sits on top, branches stack below it, and deeper levels extend to the
+// right, which keeps the diagram readable instead of shrinking it.
 
 const BLOCK_SELECTOR = 'pre[data-language="mindmap"]'
 const MIN_SCALE = 0.3
 const MAX_SCALE = 3
+const COMPACT_MAX_WIDTH = 560
 
 const NODE_HEIGHT = 32
 const LEAF_HEIGHT = 27
@@ -81,7 +85,12 @@ function prepare(node, depth) {
   return node.height
 }
 
-function place(node, x, top, side, accent, out) {
+function stackedHeight(nodes) {
+  return nodes.reduce((sum, node, index) => sum + node.height + (index > 0 ? GAP_Y : 0), 0)
+}
+
+// Horizontal layout: root in the middle, first level split left and right.
+function placeHorizontal(node, x, top, side, accent, out) {
   node.x = side === 'left' ? x - node.width : x
   node.y = top + node.height / 2 - node.nodeHeight / 2
   node.accent = accent
@@ -89,26 +98,18 @@ function place(node, x, top, side, accent, out) {
 
   if (node.children.length === 0) return
 
-  const stacked = node.children.reduce((sum, child, index) => sum + child.height + (index > 0 ? GAP_Y : 0), 0)
+  const stacked = stackedHeight(node.children)
   let cursor = top + node.height / 2 - stacked / 2
 
   for (const child of node.children) {
     const childX = side === 'left' ? node.x - GAP_X : node.x + node.width + GAP_X
-    place(child, childX, cursor, side, accent, out)
-    out.edges.push({ from: node, to: child, side })
+    placeHorizontal(child, childX, cursor, side, accent, out)
+    out.edges.push({ from: node, to: child, vertical: false })
     cursor += child.height + GAP_Y
   }
 }
 
-function svgElement(name, attributes) {
-  const element = document.createElementNS('http://www.w3.org/2000/svg', name)
-  for (const [key, value] of Object.entries(attributes)) {
-    element.setAttribute(key, String(value))
-  }
-  return element
-}
-
-function buildSvg(root) {
+function buildHorizontal(root) {
   prepare(root, 0)
 
   root.x = 0
@@ -123,18 +124,69 @@ function buildSvg(root) {
 
   let accentIndex = 0
   for (const { nodes: branches, side } of sides) {
-    const stacked = branches.reduce((sum, child, index) => sum + child.height + (index > 0 ? GAP_Y : 0), 0)
+    const stacked = stackedHeight(branches)
     let cursor = -stacked / 2
 
     for (const branch of branches) {
       const accent = ACCENTS[accentIndex++ % ACCENTS.length]
       const branchX = side === 'left' ? root.x - GAP_X : root.x + root.width + GAP_X
-      place(branch, branchX, cursor, side, accent, out)
-      out.edges.push({ from: root, to: branch, side })
+      placeHorizontal(branch, branchX, cursor, side, accent, out)
+      out.edges.push({ from: root, to: branch, vertical: false })
       cursor += branch.height + GAP_Y
     }
   }
 
+  return out
+}
+
+// Vertical layout for narrow screens: root on top, first level stacked below,
+// deeper levels extend to the right.
+function placeHorizontalChild(node, x, top, accent, out) {
+  node.x = x
+  node.y = top + node.height / 2 - node.nodeHeight / 2
+  node.accent = accent
+  out.nodes.push(node)
+
+  if (node.children.length === 0) return
+
+  const stacked = stackedHeight(node.children)
+  let cursor = top + node.height / 2 - stacked / 2
+  for (const child of node.children) {
+    placeHorizontalChild(child, node.x + node.width + GAP_X, cursor, accent, out)
+    out.edges.push({ from: node, to: child, vertical: false })
+    cursor += child.height + GAP_Y
+  }
+}
+
+function buildVertical(root) {
+  prepare(root, 0)
+
+  root.x = 0
+  root.y = 0
+
+  const out = { nodes: [root], edges: [] }
+  let cursor = root.nodeHeight + GAP_Y
+  let accentIndex = 0
+
+  for (const branch of root.children) {
+    const accent = ACCENTS[accentIndex++ % ACCENTS.length]
+    placeHorizontalChild(branch, 0, cursor, accent, out)
+    out.edges.push({ from: root, to: branch, vertical: true })
+    cursor += branch.height + GAP_Y
+  }
+
+  return out
+}
+
+function svgElement(name, attributes) {
+  const element = document.createElementNS('http://www.w3.org/2000/svg', name)
+  for (const [key, value] of Object.entries(attributes)) {
+    element.setAttribute(key, String(value))
+  }
+  return element
+}
+
+function renderSvg(out) {
   let minX = Infinity
   let minY = Infinity
   let maxX = -Infinity
@@ -162,13 +214,25 @@ function buildSvg(root) {
   for (const edge of out.edges) {
     const from = edge.from
     const to = edge.to
-    const startX = edge.side === 'left' ? from.x + offsetX : from.x + from.width + offsetX
-    const startY = from.y + from.nodeHeight / 2 + offsetY
-    const endX = edge.side === 'left' ? to.x + to.width + offsetX : to.x + offsetX
-    const endY = to.y + to.nodeHeight / 2 + offsetY
-    const bend = Math.max(26, Math.abs(endX - startX) * 0.45)
+    let d
+    if (edge.vertical) {
+      const startX = from.x + from.width / 2 + offsetX
+      const startY = from.y + from.nodeHeight + offsetY
+      const endX = to.x + to.width / 2 + offsetX
+      const endY = to.y + offsetY
+      const bend = Math.max(18, Math.abs(endY - startY) * 0.45)
+      d = `M ${startX} ${startY} C ${startX} ${startY + bend}, ${endX} ${endY - bend}, ${endX} ${endY}`
+    } else {
+      const startX = from.x + from.width + offsetX
+      const startY = from.y + from.nodeHeight / 2 + offsetY
+      const endX = to.x + offsetX
+      const endY = to.y + to.nodeHeight / 2 + offsetY
+      const bend = Math.max(26, Math.abs(endX - startX) * 0.45)
+      d = `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`
+    }
+
     const path = svgElement('path', {
-      d: `M ${startX} ${startY} C ${edge.side === 'left' ? startX - bend : startX + bend} ${startY}, ${edge.side === 'left' ? endX + bend : endX - bend} ${endY}, ${endX} ${endY}`,
+      d,
       class: from.depth === 0 ? 'mm-edge mm-edge-root' : 'mm-edge',
       stroke: from.depth === 0 ? to.accent : 'rgba(255,255,255,0.14)'
     })
@@ -208,6 +272,10 @@ function buildSvg(root) {
   return svg
 }
 
+function buildSvg(tree, compact) {
+  return renderSvg(compact ? buildVertical(tree) : buildHorizontal(tree))
+}
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
 }
@@ -225,12 +293,13 @@ function attachPanZoom(stage, canvas, svg) {
     const width = Number(svg.getAttribute('width')) || 1
     const height = Number(svg.getAttribute('height')) || 1
     const rect = stage.getBoundingClientRect()
-    const padding = 24
+    const padding = 20
+    const maxHeight = Math.min(760, Math.round(window.innerHeight * 0.7))
     const widthFit = (rect.width - padding * 2) / width
-    const heightFit = (760 - padding * 2) / height
-    scale = clamp(Math.min(widthFit, heightFit), 0.72, 1)
+    const heightFit = (maxHeight - padding * 2) / height
+    scale = clamp(Math.min(widthFit, heightFit), MIN_SCALE, 1)
 
-    stage.style.height = `${Math.min(760, Math.max(220, Math.round(height * scale + padding * 2)))}px`
+    stage.style.height = `${clamp(Math.round(height * scale + padding * 2), 180, maxHeight)}px`
     const next = stage.getBoundingClientRect()
     offsetX = (next.width - width * scale) / 2
     offsetY = (next.height - height * scale) / 2
@@ -296,7 +365,7 @@ function attachPanZoom(stage, canvas, svg) {
 
 const views = []
 
-function buildBlock(svg) {
+function buildBlock() {
   const block = document.createElement('div')
   block.className = 'graph-block'
 
@@ -319,7 +388,6 @@ function buildBlock(svg) {
 
   const canvas = document.createElement('div')
   canvas.className = 'graph-canvas'
-  canvas.appendChild(svg)
 
   stage.appendChild(canvas)
   toolbar.append(title, hint, actions)
@@ -347,20 +415,53 @@ function addControls(actions, view, block) {
   }, '全屏查看')
 }
 
+function isCompact(block) {
+  const width = block.getBoundingClientRect().width
+  if (width > 0) return width < COMPACT_MAX_WIDTH
+  return window.innerWidth < COMPACT_MAX_WIDTH
+}
+
+function mount(view) {
+  const compact = isCompact(view.block)
+  if (compact === view.compact && view.svg) {
+    view.controller.fit()
+    return
+  }
+
+  const tree = parseTree(view.source)
+  if (!tree) return
+
+  view.compact = compact
+  view.svg = buildSvg(tree, compact)
+  view.canvas.replaceChildren(view.svg)
+  view.controller = attachPanZoom(view.stage, view.canvas, view.svg)
+  view.actions.replaceChildren()
+  addControls(view.actions, view.controller, view.block)
+  view.controller.fit()
+}
+
 function renderBlock(pre) {
   const source = readSource(pre)
   const tree = parseTree(source)
   if (!tree) return
 
-  const svg = buildSvg(tree)
   const host = pre.closest('.expressive-code') || pre
-  const { block, actions, stage, canvas } = buildBlock(svg)
+
+  // Expressive Code 把整页代码块的样式表与运行时脚本注入到第一个代码块容器里，
+  // 而结构图会替换这个容器；先把注入节点挪到容器前面，否则整页代码块都会失去样式。
+  if (host !== pre) {
+    const injected = [...host.children].filter(
+      element => element.tagName === 'LINK' || element.tagName === 'SCRIPT'
+    )
+    for (const element of injected) host.parentNode.insertBefore(element, host)
+  }
+
+  const { block, actions, stage, canvas } = buildBlock()
   host.replaceWith(block)
 
-  const view = attachPanZoom(stage, canvas, svg)
+  const view = { block, actions, stage, canvas, source, svg: null, controller: null, compact: null }
   views.push(view)
-  addControls(actions, view, block)
-  view.fit()
+  mount(view)
 }
 
 export function initMindmaps() {
@@ -370,8 +471,30 @@ export function initMindmaps() {
   if (!document.documentElement.dataset.mindmapReady) {
     document.documentElement.dataset.mindmapReady = '1'
     document.addEventListener('fullscreenchange', () => {
-      for (const view of views) view.fit()
+      for (const view of views) view.controller.fit()
     })
+
+    let resizeTimer = null
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(() => {
+        for (const view of views) {
+          if (!view.block.isConnected) continue
+          mount(view)
+        }
+      }, 150)
+    })
+
+    if ('ResizeObserver' in window) {
+      const observer = new ResizeObserver(() => {
+        for (const view of views) {
+          if (!view.block.isConnected) continue
+          const compact = isCompact(view.block)
+          if (compact !== view.compact) mount(view)
+        }
+      })
+      observer.observe(document.body)
+    }
   }
 
   for (const pre of blocks) {

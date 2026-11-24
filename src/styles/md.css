@@ -687,3 +687,25 @@ article:not(.blog-post-container) a:hover:after {
   stroke-width: 1.8;
   opacity: 0.8;
 }
+
+/* 窄屏：结构图工具栏收敛，纵向树形布局由脚本切换 */
+@media (max-width: 640px) {
+  .graph-hint {
+    display: none;
+  }
+
+  .graph-toolbar {
+    padding: 0.4rem 0.5rem;
+    gap: 0.4rem;
+  }
+
+  .graph-actions button {
+    min-width: 1.9rem;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.78rem;
+  }
+
+  .graph-stage {
+    touch-action: pan-y;
+  }
+}
