@@ -154,7 +154,11 @@ spawn-at-startup "/home/rrzt/.local/bin/x11-to-wayland-clipboard"
 
 ## 备份
 
-配置没有用 dotfiles 工具管理，`~/.config` 下的文件就是源，改前手动复制一份。
+配置用 Pika Backup（Borg）备份，仓库在 `~/----我的文件/backup-h465855hgg-rrzt`，加密，每次要输密码。
+
+备份 13 个路径：`.config` 下的 niri、umbriel、ghostty、fcitx5、environment.d、systemd、gtk-3.0、gtk-4.0、autostart，加上 `.local/bin`、`.local/state/noctalia`、`.zshrc`、`.gitconfig`。首次归档 7284 个文件、424MB。
+
+每天 17:00 自动跑，保留策略 hourly 48 / daily 14 / weekly 4 / monthly 12 / yearly 10。
 
 GTK 与 GNOME 的设置不在文件里，单独导出：
 
