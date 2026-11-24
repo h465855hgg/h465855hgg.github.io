@@ -148,7 +148,10 @@
     padding: 0;
     border-radius: 0;
     box-shadow: none;
-    object-fit: cover;
+    /* contain：完整显示 og 封面，不裁切，留白用深色底补齐 */
+    object-fit: contain;
+    object-position: center;
+    background: #0d1322;
     display: block;
     transform: none !important;
 }

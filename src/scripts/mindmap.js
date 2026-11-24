@@ -223,12 +223,15 @@ function renderSvg(out) {
       const bend = Math.max(18, Math.abs(endY - startY) * 0.45)
       d = `M ${startX} ${startY} C ${startX} ${startY + bend}, ${endX} ${endY - bend}, ${endX} ${endY}`
     } else {
-      const startX = from.x + from.width + offsetX
+      // 左侧分支要从父节点左边缘出、子节点右边缘进；否则线会穿过节点并从画布左缘支出去
+      const goingLeft = to.x + to.width <= from.x
+      const startX = goingLeft ? from.x + offsetX : from.x + from.width + offsetX
       const startY = from.y + from.nodeHeight / 2 + offsetY
-      const endX = to.x + offsetX
+      const endX = goingLeft ? to.x + to.width + offsetX : to.x + offsetX
       const endY = to.y + to.nodeHeight / 2 + offsetY
       const bend = Math.max(26, Math.abs(endX - startX) * 0.45)
-      d = `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`
+      const direction = goingLeft ? -1 : 1
+      d = `M ${startX} ${startY} C ${startX + bend * direction} ${startY}, ${endX - bend * direction} ${endY}, ${endX} ${endY}`
     }
 
     const path = svgElement('path', {
