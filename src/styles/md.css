@@ -426,11 +426,15 @@ article:not(.blog-post-container) a:hover:after {
 .markdown-body p code {
   background: color-mix(in srgb, var(--primary-color) 12%, transparent);
   color: var(--primary-color);
-  padding: 4px 8px;
+  /* 垂直内边距用 em，保证药丸高度小于行高，相邻两行不会贴在一起 */
+  padding: 0.1em 0.45em;
   /* 胖一点的 code */
-  border-radius: 8px;
+  border-radius: 7px;
   font-size: 0.9em;
   font-weight: 500;
+  /* 长路径换行时每行各自成块，不连成一大片 */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 /* 水平线样式 */
