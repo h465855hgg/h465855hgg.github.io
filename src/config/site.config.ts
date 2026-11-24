@@ -84,17 +84,17 @@ export const siteConfig: SiteConfig = {
   },
   locale: "zh-CN",
   giscus: {
-    enabled: false,
-    repo: "your-repo/your-repo",
-    repoId: "your-repo-id",
-    category: "General",
-    categoryId: "your-category-id",
+    enabled: true,
+    repo: "h465855hgg/h465855hgg.github.io",
+    repoId: "R_kgDOV3KHAg",
+    category: "Announcements",
+    categoryId: "DIC_kwDOV3KHAs4DL0-R",
     mapping: "pathname",
-    strict: "0",
+    strict: "1",
     reactionsEnabled: "1",
     emitMetadata: "0",
     inputPosition: "bottom",
-    lang: "en-US",
+    lang: "zh-CN",
     loading: "lazy"
   }
 };
