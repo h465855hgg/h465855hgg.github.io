@@ -1,83 +1,70 @@
 ---
 title: "我的配置"
-description: "本机 Fedora 桌面的配置索引：Umbriel 与 Noctalia 的安装、更新、路径与快捷键，Niri 备用会话、终端与输入法、自用脚本和 systemd 单元，以及 chezmoi 的备份方式。"
+description: "一台 Fedora 笔记本上的桌面配置：Umbriel 合成器、Noctalia shell、Niri 备用会话、终端与输入法，以及这些年攒下来的脚本和踩过的坑。"
 date: 2026-11-24
 updated: 2026-11-24
 tags: [Linux, Fedora, Wayland, Umbriel, Noctalia, dotfiles]
 ---
 
-## 概述
+去年开始把主力桌面从 Niri 挪到 Umbriel，中途换过几轮包，也踩了不少坑。这篇把我现在机器上的东西整理一下：装了什么、配置写在哪、快捷键怎么排的、出问题去哪看。不是教程，更像自己的备忘录，顺带留给以后重装系统的自己。
 
-本页是本机桌面的配置索引：装了什么、配置放在哪、怎么更新、怎么备份。只记录路径与公开配置值，不含凭据、令牌与设备序列号。
+## 这台机器
 
-## 环境
+Fedora 45，RTX 4060 Laptop，14 寸 2560×1600 内屏，键盘是 `us,cn` 加 altgr-pinyin。
 
-| 项目 | 值 |
-| --- | --- |
-| 系统 | Fedora Linux 45 Workstation |
-| 显示 | NVIDIA RTX 4060 Laptop，内屏 eDP-1 2560×1600 |
-| 会话栈 | greetd → noctalia-greeter →（Umbriel 或 Niri） |
-| 键盘 | `us,cn`，variant `,,altgr-pinyin`，由 systemd-localed 提供 |
-| dotfiles | chezmoi，远端 `github.com/h465855hgg/dotfiles` |
+登录链是 greetd → noctalia-greeter → 会话。默认进 Umbriel，Niri 那套配置还留着，出问题能随时切回去。
 
-## 更新
+## 装了什么，怎么更新
 
-三个组件都由 dnf 管理，不编译：
+三件东西都走 dnf，不自己编译：
 
 ```bash
 sudo dnf upgrade --refresh
 ```
 
-| 组件 | 包名 | 生效方式 |
-| --- | --- | --- |
-| 合成器 | `umbriel-nightly` | 注销并重新登录 |
-| 桌面 shell | `noctalia` | `pkill -x noctalia; setsid -f noctalia` |
-| 登录界面 | `noctalia-greeter-git` | 下次登录时 |
+- **Umbriel**：`umbriel-nightly`，来自 terra 仓库的 git 快照，注销重登生效
+- **Noctalia**：`noctalia`，Fedora 官方源，`pkill -x noctalia; setsid -f noctalia` 就换新版
+- **greeter**：`noctalia-greeter-git`，COPR 的 git 版，下次登录生效
 
-```bash
-rpm -q umbriel-nightly noctalia noctalia-greeter-git
-noctalia --version
-```
+以前图新鲜自己编译过，编一次十几分钟，出问题还得自己查依赖，后来就老实交给包管理器了。想更激进一点可以换 `noctalia-git`，但和 `noctalia` 包冲突，得先 swap。
 
-greeter 可以换成 terra 的稳定版，两者互斥，必须 swap：
+## 配置都放在哪
 
-```bash
-sudo dnf swap noctalia-greeter-git noctalia-greeter
-```
-
-## 配置路径
-
-| 路径 | 内容 |
+| 路径 | 里面是什么 |
 | --- | --- |
-| `~/.config/umbriel/config.toml` | Umbriel 用户配置，`[include]` 系统模板后只写差异 |
-| `/usr/share/umbriel/config.toml` | 包自带基底，升级会变 |
-| `~/.local/state/noctalia/settings.toml` | Noctalia 全部设置（GUI 写这里） |
-| `~/.local/state/noctalia/state.toml` | Noctalia 运行状态 |
-| `~/.local/state/noctalia/plugins/` | 插件与模板 |
-| `/usr/share/noctalia/assets/templates/` | 各应用模板脚本 `apply.sh` / `undo-*.sh` |
-| `~/.config/niri/` | Niri 备用会话配置 |
+| `~/.config/umbriel/config.toml` | Umbriel 的用户配置，只写和默认值不一样的部分 |
+| `/usr/share/umbriel/config.toml` | 包自带的基底配置，升级会变，别直接改 |
+| `~/.local/state/noctalia/settings.toml` | Noctalia 的全部设置，设置界面改的就是它 |
+| `~/.local/state/noctalia/plugins/` | 插件和模板 |
+| `~/.config/niri/` | Niri 备用会话 |
 | `~/.config/ghostty/` | 终端 |
-| `~/.config/fcitx5/` | 输入法 |
-| `~/.config/environment.d/` | 会话环境变量 |
-| `~/.local/bin/` | 自用脚本 |
+| `~/.config/fcitx5/`、`~/.config/environment.d/` | 输入法和会话环境变量 |
+| `~/.local/bin/` | 我自己写的脚本 |
 | `~/.config/systemd/user/` | 用户单元 |
-| `~/.local/share/chezmoi/` | dotfiles 源仓库 |
-| `~/.config/dconf/user` | GTK/GNOME 设置数据库 |
+| `~/.local/share/chezmoi/` | dotfiles 源仓库，远端在 GitHub |
+
+Umbriel 的配置我用 `[include]` 把系统那份引进来，自己只覆盖改过的项，升级后新默认值能自动吃到。改完保存就热重载，顺手校验一下：
+
+```bash
+umbriel config validate -c ~/.config/umbriel/config.toml
+umbriel msg config-reload
+```
 
 ## Umbriel
 
-| 键 | 值 |
-| --- | --- |
-| `general.autostart` | `/home/rrzt/.local/bin/noctalia-gpu` |
-| `general.focus_on_activate` | `true`（托盘图标点击依赖它） |
-| `general.nvidia_sync_workaround` | `false` |
-| `output."eDP-1".scale` | `1.5` |
-| `input.touchpad` | `natural_scroll = true`、`tap = true` |
-| `input.cursor` | `theme = Bibata-Modern-Classic`、`size = 24` |
-| `hot_corners.top_left` | `delay_ms = 0` |
-| `[keybinds]` | 152 条，对齐 Niri 习惯 |
+真正需要动的其实没几项：
 
-启动包装脚本 `~/.local/bin/noctalia-gpu`：
+| 配置 | 值 | 为什么 |
+| --- | --- | --- |
+| `general.autostart` | `/home/rrzt/.local/bin/noctalia-gpu` | 不自动拉起 shell，登录进去就是黑屏加一个鼠标 |
+| `general.focus_on_activate` | `true` | 关着的时候点托盘图标没反应 |
+| `general.nvidia_sync_workaround` | `false` | 开着会等 GPU 完成，帧率高的时候反而卡 |
+| `output."eDP-1".scale` | `1.5` | 2560×1600 的 14 寸屏，1 倍缩放字小得看不清 |
+| `input.touchpad` | `natural_scroll = true`、`tap = true` | 默认方向和 GNOME 相反，用着别扭 |
+| `input.cursor` | `Bibata-Modern-Classic`，24 | 和 Niri 那边保持一致 |
+| `hot_corners.top_left` | `delay_ms = 0` | 默认要停 500ms，习惯了 GNOME 那种一碰就开 |
+
+`noctalia-gpu` 是个包装脚本，两行环境变量都是为了修 bug，正文后面说：
 
 ```sh
 #!/bin/sh
@@ -86,228 +73,125 @@ export __GL_SYNC_TO_VBLANK=0
 exec /usr/bin/noctalia "$@"
 ```
 
-鼠标侧键由 `~/.local/bin/umbriel-sidekey` + `~/.config/systemd/user/umbriel-sidekey.service` 实现：抓取指定鼠标，把 `BTN_SIDE` 转成 `window-toggle-floating`，其余事件原样转发；随 `umbriel-session.target` 启动。
+鼠标侧键单独开了个服务。Umbriel 的键位不接受没有修饰键的鼠标键，`MouseBack` 直接判无效，所以只能抓设备自己做事件转发：把 `BTN_SIDE` 吃掉换成 `window-toggle-floating`，其余事件原样往虚拟设备写。服务挂在 `umbriel-session.target` 上，只在这个会话里跑。
 
 ```bash
-umbriel config validate -c ~/.config/umbriel/config.toml
-umbriel msg config-reload
-umbriel config get hot_corners.top_left
-umbriel outputs
-umbriel windows
+systemctl --user status umbriel-sidekey
+journalctl --user -u umbriel-sidekey -f
 ```
 
 ## Noctalia
 
-| 项目 | 值 |
-| --- | --- |
-| 主题 | `builtin = Ayu`，壁纸取色，`wallpaper_scheme = vibrant` |
-| 模板 | `builtin_ids = ["ghostty", "niri", "qt"]`（已移除 gtk3/gtk4） |
-| 插件 | 7 个（processes、hover-widgets、screen_recorder、lyrics、wallpaper-widget、github-contributions 等） |
-| Bar | 两条：顶部 34px、底部 47px，均 `reserve_space` |
+设置全在 `~/.local/state/noctalia/settings.toml`，图形界面改完也是写这里，所以直接拿编辑器改完全没问题。主题是壁纸取色，模板只留了 ghostty、niri、qt 三个，GTK 那两个被我关了——原因在踩坑那节。
+
+插件挂了 7 个，常用的就是进程监控、hover widgets 和歌词。bar 两条，顶部 34px、底部 47px。
+
+常用命令：
 
 ```bash
 noctalia msg status
-noctalia msg config-reload
-noctalia msg settings-toggle
 noctalia msg panel-toggle launcher
+noctalia msg settings-toggle
 noctalia msg session lock
 ```
 
 ## 快捷键
 
-`Mod` = Super，全部在 `~/.config/umbriel/config.toml` 的 `[keybinds]`。现场查看：`Mod+Shift+/`。
+`Mod` 是 Super，全部在 `~/.config/umbriel/config.toml` 的 `[keybinds]` 里，152 条。记不住就按 `Mod+Shift+/`，会把当前生效的键位表弹出来。
 
-| 键 | 应用与面板 |
+| 键 | 干什么 |
 | --- | --- |
-| `Mod+Return`、`Mod+T` | 终端 ghostty |
+| `Mod+Return`、`Mod+T` | 终端 |
 | `Mod+Space`、`Mod+D` | 启动器 |
 | `Mod+S` / `Mod+V` / `Mod+Comma` | 控制中心 / 剪贴板 / 设置 |
-| `Alt+Tab` | 窗口切换器 |
+| `Alt+Tab` | 窗口切换 |
+| `Mod+Q` / `Mod+Shift+Q` | 关窗 / 强杀 |
+| `Mod+F` / `Mod+Shift+F` / `Mod+M` | 最大化 / 全屏 / 撑满到边缘 |
+| `Mod+Alt+T` / `Mod+Shift+V` / `Mod+C` | 浮动切换 / 浮动层切焦点 / 浮动窗居中 |
+| `Mod+Alt+方向` | 把浮动窗推到边缘 |
+| `Mod+H/J/K/L`、`Mod+方向` | 焦点移动 |
+| `Mod+Ctrl+H/J/K/L` | 移动列或窗口 |
+| `Mod+R` / `Mod+Shift+R` | 列宽预设轮换 |
+| `Mod+Ctrl+F` / `Mod+Ctrl+C` | 撑满可用宽度 / 列居中 |
+| `Mod+1`…`9` | 切工作区 |
+| `Mod+Shift+1`…`9` | 把窗口丢到对应工作区 |
+| `Mod+U` / `Mod+I`、`Mod+滚轮` | 上下切工作区 |
 | `Mod+Escape` | 快捷键抑制开关 |
-| `Mod+Shift+Escape`、`Mod+Shift+E`、`Ctrl+Alt+Delete` | 退出会话 |
+| `Mod+Shift+E`、`Ctrl+Alt+Delete` | 退出会话（带确认） |
 | `Super+Alt+L` | 锁屏 |
 | `Print` / `Ctrl+Print` / `Alt+Print` | 区域 / 全屏 / 窗口截图 |
 
-| 键 | 窗口 |
+有一处特意改过：Umbriel 默认把 `Mod+Escape` 绑成直接退出会话，从 Niri 过来的人很容易误触，我换成了快捷键抑制，退出挪到 `Mod+Shift+E`。
+
+## Niri 还留着
+
+`~/.config/niri/config.kdl` 只是个入口，实际内容拆开：
+
+| 文件 | 内容 |
 | --- | --- |
-| `Mod+Q` / `Mod+Shift+Q` | 关闭 / 强制关闭 |
-| `Mod+F` / `Mod+Shift+F` | 最大化 / 全屏 |
-| `Mod+M` | 最大化到边缘 |
-| `Mod+P` | 置顶 |
-| `Mod+W` | 标签页分组 |
-| `Mod+O` | 工作区总览 |
-| `Mod+Alt+T` | 浮动 / 平铺切换 |
-| `Mod+Shift+V` | 浮动层与平铺层切焦点 |
-| `Mod+C` | 浮动窗口居中 |
-| `Mod+Alt+方向键` | 浮动窗口推到边缘 |
-| `Mod+Alt+-` / `Mod+Alt+=` | 浮动窗宽度 |
-| `Mod+Alt+Shift+-` / `+=` | 浮动窗高度 |
-
-| 键 | 焦点、移动与尺寸 |
-| --- | --- |
-| `Mod+方向键`、`Mod+H/J/K/L` | 焦点移动 |
-| `Mod+F1` | 下一个窗口 |
-| `Mod+Home` / `Mod+End` | 首 / 末列 |
-| `Mod+Ctrl+方向键`、`Mod+Ctrl+H/J/K/L` | 移动列 / 窗口 |
-| `Mod+Ctrl+Home` / `Mod+Ctrl+End` | 列移到首 / 末 |
-| `Mod+[` / `Mod+]` / `Mod+.` | 吞并或拆出 |
-| `Mod+Shift+方向键`、`Mod+Shift+H/J/K/L` | 切显示器焦点 |
-| `Mod+Shift+Ctrl+方向键`、`Mod+Shift+Ctrl+H/J/K/L` | 列移到别的显示器 |
-| `Mod+R` / `Mod+Shift+R` | 列宽预设循环 / 反向 |
-| `Mod+-` / `Mod+=`、`Mod+Ctrl+-` / `Mod+Ctrl+=` | 列宽微调 / 粗调 |
-| `Mod+Shift+-` / `Mod+Shift+=` | 窗口高度 |
-| `Mod+Ctrl+Shift+R` / `Mod+Ctrl+R` | 高度预设循环 / 复位 |
-| `Mod+Ctrl+F` / `Mod+Ctrl+C` | 列撑满 / 居中 |
-
-| 键 | 工作区与其它 |
-| --- | --- |
-| `Mod+1`…`Mod+9` | 切换工作区 |
-| `Mod+Shift+1`…`9` | 窗口移到工作区 |
-| `Mod+Ctrl+1`…`9` | 整列移到工作区 |
-| `Mod+U` / `Mod+I`、`Mod+Page_Down` / `Mod+Page_Up` | 上 / 下切工作区 |
-| `Mod+Ctrl+U` / `Mod+Ctrl+I` | 列移到上 / 下工作区 |
-| `Mod+Shift+U` / `Mod+Shift+I` | 移动工作区本身 |
-| `Mod+滚轮` / `Mod+Ctrl+滚轮` / `Mod+Shift+滚轮` | 切工作区 / 移列 / 左右切焦点 |
-| `Mod+Alt+Space` / `Mod+Shift+Space` / `Mod+Ctrl+Space` | scratchpad 开关 / 移入 / 恢复 |
-| `XF86Audio*`、`XF86MonBrightness*` | 音量与亮度，走 Noctalia OSD |
-
-## Niri
-
-入口 `~/.config/niri/config.kdl` 只做四件事：include、启动项、自定义键位、窗口与图层规则。
-
-| 文件 | 作用 |
-| --- | --- |
-| `config.kdl` | 入口，约 2KB |
-| `default-base.kdl` | 上游默认配置，27KB，121 条键位 |
+| `default-base.kdl` | 上游默认配置，27KB，键位都在里面 |
 | `animations.kdl` | 动画曲线 |
-| `cursor.kdl` | 光标 `Bibata-Modern-Classic`，24px |
-| `noctalia.kdl` | Noctalia 写入的配色（自动生成，勿手改） |
+| `cursor.kdl` | 光标主题 |
+| `noctalia.kdl` | Noctalia 写进来的配色，别手改 |
 
-```kdl
-include "default-base.kdl"
-include "animations.kdl"
-include "cursor.kdl"
-include "noctalia.kdl"
-```
+启动项挂了 shell 的 watchdog 和剪贴板桥。自己加的键位不多：终端、几个 Noctalia 面板、`MouseBack` 切浮动、音量亮度键，其余都沿用默认。窗口圆角 12，Zed 和 ghostty 开了背景模糊，壁纸压在背景层。
 
-启动项：
+## 终端和输入法
 
-```kdl
-spawn-at-startup "/home/rrzt/.local/bin/noctalia-watchdog"
-spawn-at-startup "/home/rrzt/.local/bin/x11-to-wayland-clipboard"
-```
+终端是 ghostty，配置在 `~/.config/ghostty/`，主题和 shader 也放在那。输入法 fcitx5，默认布局 `us`，日常用 msime。会话变量在 `~/.config/environment.d/`：`GTK_IM_MODULE`、`QT_IM_MODULE`、`XMODIFIERS` 一套，外加 locale 和光标主题。
 
-自定义键位（其余沿用 `default-base.kdl`）：
+## 自己写的几个脚本
 
-| 键 | 动作 |
-| --- | --- |
-| `Mod+Return`、`Mod+T` | ghostty |
-| `Mod+Space` / `Mod+S` / `Mod+V` / `Mod+Comma` | Noctalia 启动器 / 控制中心 / 剪贴板 / 设置 |
-| `MouseBack` | 切换窗口浮动 |
-| `XF86Audio*`、`XF86MonBrightness*` | 音量与亮度 |
+`~/.local/bin` 里常用的就这些：
 
-输入与规则：
+- `noctalia-gpu`：带环境变量启动 shell，修 NVIDIA 卡顿和配置目录串台
+- `umbriel-sidekey`：鼠标侧键转窗口浮动
+- `noctalia-watchdog`：Niri 会话下守着 shell，挂了自动拉起来
+- `x11-to-wayland-clipboard`：X11 和 Wayland 的剪贴板桥
+- `dotbackup`、`chezmoi`：备份和版本管理
 
-| 项目 | 值 |
-| --- | --- |
-| 触控板 | `tap`、`natural-scroll` |
-| 窗口圆角 | `geometry-corner-radius 12`，裁剪到几何 |
-| Noctalia 设置窗口 | 浮动，固定 1080×920 |
-| Zed / ghostty | 背景模糊（ghostty 额外 `xray`） |
-| 图层规则 | 壁纸置于背景层，bar 不模糊 |
+用户单元开了 `umbriel-sidekey`、`msime-linux-clipboard`、`appimagelauncherd`、`wireplumber`、`obex`。
 
-## 终端与输入法
+## 备份
 
-| 路径或项目 | 内容 |
-| --- | --- |
-| `~/.config/ghostty/config`、`config.ghostty` | 终端配置 |
-| `~/.config/ghostty/themes/`、`shaders/` | 主题与着色器 |
-| `~/.config/fcitx5/profile` | 默认布局 `us`，默认输入法 `msime` |
-| `~/.config/environment.d/fcitx5.conf` | `GTK_IM_MODULE`、`QT_IM_MODULE`、`XMODIFIERS` 等 |
-| `~/.config/environment.d/locale.conf` | `LANG=zh_CN.UTF-8` |
-| `~/.config/environment.d/cursor.conf` | `XCURSOR_THEME`、`XCURSOR_SIZE` |
-
-## Shell 与工具
-
-`~/.zshrc` 的 14 条别名：
-
-| 别名 | 展开 |
-| --- | --- |
-| `ls` / `ll` / `la` / `l` | 带颜色与人类可读大小 |
-| `grep` | `--color=auto` |
-| `cp` / `mv` / `rm` | 交互确认（`-i`） |
-| `mkdir` | `-p` |
-| `df` / `free` | `-h` |
-| `..` / `...` / `....` | 上跳 1/2/3 级 |
-
-`~/.gitconfig`：全局 `user.name`、`user.email`，GitHub 凭据走 `gh auth git-credential`。
-
-## 脚本与单元
-
-| 脚本 | 作用 |
-| --- | --- |
-| `noctalia-gpu` | 带环境变量启动 shell（修 NVIDIA 卡顿、隔离 XDG） |
-| `umbriel-sidekey` | 鼠标侧键映射到窗口浮动 |
-| `noctalia-watchdog` | Niri 会话下守护 shell |
-| `x11-to-wayland-clipboard` | X11 与 Wayland 剪贴板桥 |
-| `dotbackup` | dotfiles 备份工具 |
-| `chezmoi` | dotfiles 版本管理 |
-
-启用的用户单元：
-
-```
-umbriel-sidekey.service
-msime-linux-clipboard.service
-appimagelauncherd.service
-wireplumber.service
-obex.service
-```
-
-## 备份与同步
-
-chezmoi 源目录 `~/.local/share/chezmoi`，远端 `github.com/h465855hgg/dotfiles`，当前管理 784 个文件。
+dotfiles 用 chezmoi 管，源目录在 `~/.local/share/chezmoi`，推到 `github.com/h465855hgg/dotfiles`，现在 784 个文件。
 
 ```bash
 chezmoi add ~/.config/niri/config.kdl
 chezmoi diff
 chezmoi apply
-chezmoi cd
 chezmoi update
 ```
 
-| 文件 | 状态 |
-| --- | --- |
-| `~/.config/niri/*` | 已纳管 |
-| `~/.config/ghostty/*` | 已纳管 |
-| `~/.config/fcitx5/profile` | 已纳管 |
-| `~/.config/environment.d/*` | 已纳管 |
-| `~/.config/umbriel/config.toml` | 未纳管 |
-| `~/.zshrc` | 未纳管 |
-| Noctalia 设置 | 未纳管（明文 TOML，可直接 add） |
+Niri、ghostty、fcitx5、environment.d 都已经纳管；Umbriel 的 `config.toml`、`.zshrc` 和 Noctalia 的设置还没加，属于回头要补的活。
 
-GNOME/GTK 设置单独备份：
+GTK 和 GNOME 那套设置单独导一份，心里踏实：
 
 ```bash
 dconf dump / > ~/.config/dconf-backup-$(date +%F).txt
 dconf load / < ~/.config/dconf-backup-2026-11-24.txt
 ```
 
-## 已知坑
+## 踩过的坑
 
-| 现象 | 原因 | 处理 |
-| --- | --- | --- |
-| 登录后黑屏只有光标 | 未设置 `general.autostart` | `autostart = ["/home/rrzt/.local/bin/noctalia-gpu"]` |
-| 操作 shell 卡顿 2 秒 | NVIDIA EGL-Wayland 在 swap 等帧，阻塞主循环 | 包装脚本加 `__GL_SYNC_TO_VBLANK=0` |
-| GTK 应用设置"消失" | 环境里带 `XDG_CONFIG_HOME`，读错配置目录 | 启动脚本 `unset XDG_CONFIG_HOME` |
-| 启动器对已运行应用只抬窗口 | desktop 条目 `DBusActivatable=true` | 用户级覆盖改为 `false` |
-| Files 窗口背景透明 | Noctalia 注入 `gtk.css` 的自定义调色板 | 移除 gtk3/gtk4 模板并跑 `undo-gtk*.sh` |
-| 托盘图标点击无反应 | `focus_on_activate` 默认关闭 | 设为 `true` |
-| 挂起或切 VT 后黑屏 | NVIDIA 恢复时 swapchain 失败 | 切 VT 或重启 |
+**登录进去只有黑屏和一个鼠标。** 没配 `autostart`，合成器起来了但没有任何客户端。加一行 `autostart = [...]` 就好。
+
+**操作 shell 的时候莫名卡两秒。** 用 gdb 看了下栈，Noctalia 主线程卡在 NVIDIA 的 `eglSwapBuffers` 里等帧回调，IPC 和渲染在同一个循环，所以按快捷键开面板也跟着排队。给 shell 单独加 `__GL_SYNC_TO_VBLANK=0` 就好了，IPC 从 2 秒降到 20 毫秒。
+
+**GTK 应用的设置像是全丢了。** 环境里不知什么时候多了个 `XDG_CONFIG_HOME`，指向 `~/.config-ghostty`，于是应用和 dconf 都去那边找配置，看起来很干净，其实是找错了地方。原来那份 dconf 一直躺在 `~/.config/dconf/user` 里，把变量去掉就回来了。
+
+**Files 的背景变透明了。** Noctalia 的模板处理器往 `gtk.css` 里塞了一段 `@import`，把窗口背景色换成了它按壁纸算出来的调色板。把 gtk3/gtk4 模板从 `builtin_ids` 里删掉，再跑一遍官方的 `undo-gtk*.sh` 就恢复。
+
+**从启动器打开已经开着的 Files，只抬窗口不开新的。** 因为它的 desktop 条目写着 `DBusActivatable=true`，启动器走 D-Bus 的 `Activate`，根本不会执行 `--new-window`。覆盖一份用户级的 desktop 文件，把这一行改成 `false`。
+
+**托盘图标点了没反应。** `focus_on_activate` 默认是关的，应用请求激活被合成器丢掉。设成 `true` 就行。
+
+**合盖或者切 VT 回来黑屏。** 日志里是 `Swapchain for output 'eDP-1' failed test`，NVIDIA 恢复时的问题，目前没找到配置层面的解法，只能切 VT 或者重启。
 
 ## 参考
 
-- [Umbriel 配置](https://docs.noctalia.dev/umbriel/configuration/)：TOML 全部选项与热重载规则
-- [Umbriel 动作列表](https://docs.noctalia.dev/umbriel/actions/)：键位可绑定的全部动作名
-- [Umbriel 键位](https://docs.noctalia.dev/umbriel/keybinds/)：chord 语法、子映射、热角
-- [Noctalia 与 Umbriel 集成](https://docs.noctalia.dev/noctalia/compositor-settings/umbriel)：推荐设置组合
-- [Noctalia IPC](https://docs.noctalia.dev/noctalia/ipc/shell/)：`noctalia msg` 全部命令
+- [Umbriel 配置](https://docs.noctalia.dev/umbriel/configuration/)
+- [Umbriel 动作列表](https://docs.noctalia.dev/umbriel/actions/)
+- [Umbriel 键位](https://docs.noctalia.dev/umbriel/keybinds/)
+- [Noctalia 与 Umbriel 集成](https://docs.noctalia.dev/noctalia/compositor-settings/umbriel)
+- [Noctalia IPC](https://docs.noctalia.dev/noctalia/ipc/shell/)
