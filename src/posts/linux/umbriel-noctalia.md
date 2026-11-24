@@ -1,222 +1,181 @@
 ---
-title: "Umbriel + Noctalia：Fedora 上的 Wayland 合成器与桌面 shell"
-description: "Umbriel 是 Noctalia 团队开发的 Wayland 合成器，负责窗口、输入与输出；Noctalia 提供 bar、启动器、通知、锁屏，greeter 负责登录。本文给出三者的 dnf 安装、配置要点（触控板方向、键位迁移、热角、鼠标侧键）与统一更新流程。"
+title: "Umbriel + Noctalia 速查（Fedora）"
+description: "Umbriel 合成器与 Noctalia shell、greeter 的安装路径、更新命令、配置项与键位表。一页速查，不含叙述。"
 date: 2026-11-24
+updated: 2026-11-24
 tags: [Linux, Fedora, Wayland, Umbriel, Noctalia]
 ---
 
-## 概述
-
-Umbriel 是一个平铺式 Wayland 合成器，采用动态工作区与 scrolling 布局，职责与 Niri、Hyprland 相同：管理窗口、输入设备与输出，不提供任何界面元素。壁纸、任务栏、启动器、通知、锁屏由 Noctalia shell 承担；登录界面由 Noctalia greeter（greetd 前端）承担。
-
-三者分工明确，也意味着**只装合成器不会得到桌面**：没有 shell 连接到 Umbriel 时，登录后屏幕上只有黑色背景与鼠标指针。这是空会话的正常表现，不是驱动或渲染故障。
-
-本文覆盖 Fedora 上的安装形态、关键配置项、Niri 键位迁移对照，以及全部由 dnf 完成的更新方式。
-
-## 环境
-
-| 项目 | 值 |
-| --- | --- |
-| 系统 | Fedora Linux 45 Workstation |
-| 显示 | NVIDIA RTX 4060 Laptop，内屏 eDP-1 2560×1600 |
-| 会话栈 | greetd → noctalia-greeter → Umbriel → Noctalia shell |
-| 键盘 | `us,cn`，variant `,,altgr-pinyin`，由 systemd-localed 提供 |
-
-## 组成
-
-| 组件 | RPM 包 | 版本 | 仓库 |
-| --- | --- | --- | --- |
-| 合成器 | `umbriel-nightly` | `0^20261122git.3d7052f` | terra |
-| 桌面 shell | `noctalia` | `5.6.0` | Fedora `updates` |
-| 登录界面 | `noctalia-greeter-git` | `1.7.0^9.199fb7f` | COPR `lionheartp/Hyprland` |
-
-```mindmap
-  root((Umbriel · Noctalia))
-    合成器
-      umbriel-nightly
-      config.toml
-      键位与输入
-    桌面层
-      noctalia shell
-      bar 与启动器
-      通知与锁屏
-    登录层
-      greetd
-      noctalia-greeter
-```
-
-terra 另提供稳定版 `noctalia-greeter` 1.7.1，与 COPR 的 git 版互斥，切换需使用 `dnf swap`，不能直接 `install`。
-
-## 配置
-
-### 文件结构
-
-系统模板位于 `/usr/share/umbriel/config.toml`，随包升级而变化，不直接修改。用户配置 `~/.config/umbriel/config.toml` 通过 `[include]` 引入系统模板，只写差异项：
-
-```toml
-[include]
-files = ["/usr/share/umbriel/config.toml"]
-
-[general]
-autostart = ["noctalia"]
-
-[output."eDP-1"]
-scale = 1.5
-
-[input.touchpad]
-natural_scroll = true
-tap = true
-
-[hot_corners.top_left]
-delay_ms = 0
-```
-
-表按键合并，标量与数组由后加载的文件覆盖。配置保存后热重载，无需注销；校验命令：
-
-```bash
-umbriel config validate -c ~/.config/umbriel/config.toml
-```
-
-### 必改项
-
-| 配置项 | 默认值 | 不改的后果 |
-| --- | --- | --- |
-| `general.autostart` | `[]` | 登录后无任何客户端，黑屏加一个鼠标指针 |
-| `input.touchpad.natural_scroll` | 跟随 libinput（关闭） | 双指滚动方向与 GNOME、Niri 相反 |
-| `hot_corners.top_left.delay_ms` | `500` | 触发角需要停留半秒才响应 |
-| `output."<name>".scale` | `1` | 高分辨率小尺寸屏幕上的文字过小 |
-
-热角默认动作是 `overview-open`，与 GNOME 的左上角行为一致；`delay_ms = 0` 后进入角落后立即打开。
-
-### 键位迁移
-
-Umbriel 内置键位参考 Niri，但若干默认绑定不同。`Mod` 对应 `general.mod_key`，原生会话下为 Super。需要覆写时在用户配置的 `[keybinds]` 中写出，同一 chord 后者覆盖前者。
-
-| 用途 | Niri | Umbriel 默认 | 覆写为 |
-| --- | --- | --- | --- |
-| 终端 | `Mod+T` | 切换浮动 | `spawn ghostty` |
-| 启动器 | `Mod+Space` | scratchpad | `spawn noctalia msg panel-toggle launcher` |
-| 控制中心 / 剪贴板 / 设置 | `Mod+S` `Mod+V` `Mod+Comma` | 未绑定 / 未绑定 / 吞并左列 | 分别指向 Noctalia 面板 |
-| 最大化列 | `Mod+F` | 全屏 | `window-toggle-maximize` |
-| 全屏 | `Mod+Shift+F` | — | `window-toggle-fullscreen` |
-| 浮动切换 | `Mod+V` | — | `window-toggle-floating` |
-| 浮动 / 平铺切焦点 | `Mod+Shift+V` | — | `window-focus-switch-floating` |
-| 移动列与窗口 | `Mod+Ctrl+方向键` | `Mod+Shift+方向键` | `column-move-left/right`、`window-move-up/down` |
-| 上下切工作区 | `Mod+U` `Mod+I` | — | `workspace-next/previous` |
-| 滚轮切工作区 | `Mod+滚轮` | 左右切窗口 | `workspace-next/previous`，配 `cooldown_ms = 150` |
-| 快捷键抑制 | `Mod+Escape` | **直接退出会话** | `shortcuts-inhibit-toggle` |
-| 退出会话 | `Mod+Shift+E` | — | `session-quit` |
-| 截图 | `Print` | — | `spawn noctalia msg screenshot-region` |
-| 锁屏 | `Super+Alt+L` | — | `spawn noctalia msg session lock` |
-| 热键总览 | `Mod+Shift+Slash` | — | `cheatsheet-toggle` |
-
-`Mod+Escape` 一项需要特别注意：Umbriel 默认把它绑定为 `session-quit`，从 Niri 迁移时若按习惯连按两次抑制快捷键，会触发退出确认面板。
-
-### 鼠标侧键
-
-Umbriel 的 chord 解析器要求鼠标按键至少带一个修饰键，`MouseBack`、`BTN_SIDE` 等写法均被判为无效 chord，只有 `Alt+MouseBack` 一类可以通过。Wayland 下也无法用 udev hwdb 把 `BTN_SIDE` 改成键盘键：libinput 按设备能力分类，改键码不会让指针设备获得键盘能力，改出的事件会被丢弃。
-
-要保留“裸按侧键切换浮动”，需要用用户态程序接管该设备：读取鼠标 evdev、转发除 `BTN_SIDE` 以外的全部事件到虚拟设备，收到 `BTN_SIDE` 时调用合成器 IPC。
-
-```bash
-# 服务与脚本
-~/.local/bin/umbriel-sidekey
-~/.config/systemd/user/umbriel-sidekey.service
-
-systemctl --user enable --now umbriel-sidekey
-journalctl --user -u umbriel-sidekey -f
-```
-
-服务通过 `WantedBy=umbriel-session.target` 仅在 Umbriel 会话中启动，其他会话不受影响；`/dev/input/event*` 需要用户属于 `input` 组，`/dev/uinput` 需要可写。
-
-## 常用命令
-
-```bash
-# 配置
-umbriel config get 'hot_corners.top_left'
-umbriel config set 'hot_corners.top_left.delay_ms' 0   # 仅本次会话，重启失效
-umbriel config unset 'hot_corners.top_left.delay_ms'   # 撤销运行时覆盖
-
-# 状态检查
-umbriel outputs
-umbriel windows
-umbriel layers
-umbriel msg config-reload
-
-# shell
-noctalia msg status
-noctalia msg panel-toggle launcher
-noctalia msg session lock
-```
-
-`umbriel config set` 是内存覆盖，不写文件；持久化仍需修改 `config.toml`。
-
 ## 更新
 
-三个组件均由 dnf 管理，不需要编译，也不建议从源码覆盖安装：
+全部由 dnf 管理，不编译。一条命令更新三者：
 
 ```bash
 sudo dnf upgrade --refresh
 ```
 
-`--refresh` 会先刷新元数据，避免看到过期的版本。组件生效时机不同：
-
-| 组件 | 生效条件 |
-| --- | --- |
-| Umbriel | 注销并重新登录 |
-| Noctalia shell | `pkill -x noctalia; setsid -f noctalia`，或注销重登 |
-| greeter | 下次登录时 |
-
-版本核对：
+| 组件 | 包名 | 生效方式 |
+| --- | --- | --- |
+| 合成器 | `umbriel-nightly` | 注销并重新登录 |
+| 桌面 shell | `noctalia` | `pkill -x noctalia; setsid -f noctalia` |
+| 登录界面 | `noctalia-greeter-git` | 下次登录时自动生效 |
 
 ```bash
+# 核对版本
 rpm -q umbriel-nightly noctalia noctalia-greeter-git
-umbriel --version
 noctalia --version
-```
 
-若把 greeter 换成 terra 的稳定版，两者互斥，必须使用 swap：
-
-```bash
+# 只更新到 git 快照的稳定版 greeter（与 git 版互斥，必须 swap）
 sudo dnf swap noctalia-greeter-git noctalia-greeter
 ```
 
-### 手动安装的清理
+## 路径
 
-若此前用手动方式装过 shell，`~/.local/bin/noctalia` 会因 PATH 顺序遮蔽包版，导致 `dnf upgrade` 后仍运行旧二进制。处理方式是把该路径改为指向包版：
+| 路径 | 内容 |
+| --- | --- |
+| `~/.config/umbriel/config.toml` | Umbriel 用户配置（只写差异项） |
+| `/usr/share/umbriel/config.toml` | 包自带起始配置，被上面 include，升级会变 |
+| `~/.local/state/noctalia/settings.toml` | Noctalia 全部设置（GUI 设置页写这里） |
+| `~/.local/state/noctalia/state.toml` | Noctalia 运行状态 |
+| `~/.local/state/noctalia/plugins/` | 插件与模板 |
+| `/etc/greetd/config.toml` | greetd 启动哪个 greeter |
+| `/var/lib/noctalia-greeter/greeter.toml` | greeter 外观与登录设置 |
+| `/usr/lib/systemd/user/umbriel.service` | Umbriel 会话单元 |
+| `~/.local/bin/umbriel-sidekey` | 鼠标侧键映射脚本 |
+| `~/.config/systemd/user/umbriel-sidekey.service` | 侧键服务单元 |
+| `~/.local/bin/noctalia` | 指向 `/usr/bin/noctalia` 的软链 |
+
+## Umbriel 配置
+
+用户配置只保留与默认值的差异，校验与生效：
 
 ```bash
-rm -f ~/.local/bin/noctalia
-ln -s /usr/bin/noctalia ~/.local/bin/noctalia
+umbriel config validate -c ~/.config/umbriel/config.toml   # 校验
+umbriel config get hot_corners.top_left                    # 查生效值
+umbriel config set hot_corners.top_left.delay_ms 0         # 临时覆盖（不写文件）
+umbriel msg config-reload                                  # 手动重载
 ```
 
-同时清理手动安装留下的资源副本与 `/usr/local/bin` 下的软链；用户数据目录 `~/.local/state/noctalia` 保存设置、插件与状态，不能删除。
-
-## 已知问题与解决方案
-
-| 现象 | 原因 | 解决 |
+| 段落 | 设置 | 作用 |
 | --- | --- | --- |
-| 登录后只有黑屏与光标 | 未配置 `general.autostart`，合成器没有客户端 | `autostart = ["noctalia"]` |
-| 触控板滚动方向相反 | `natural_scroll` 未设置，沿用 libinput 传统方向 | `input.touchpad.natural_scroll = true` |
-| 快捷键与 Niri 不一致 | 内置键位与 Niri 存在差异 | 按对照表覆写 `[keybinds]` |
-| 按 `Mod+Escape` 弹出退出确认 | Umbriel 默认该键为 `session-quit` | 改为 `shortcuts-inhibit-toggle` |
-| 鼠标侧键无响应 | chord 必须带修饰键；hwdb 改键码在 Wayland 无效 | 用户态 evdev 接管（见上） |
-| 触发角要等半秒 | 默认 `delay_ms = 500` | 设为 `0` |
-| 更新后版本没变 | `~/.local/bin` 中的旧二进制遮蔽包版 | 软链指向 `/usr/bin/noctalia` |
-| 安装稳定版 greeter 失败 | 与 `noctalia-greeter-git` 文件冲突 | 使用 `dnf swap` |
-| 挂起或切换 VT 后黑屏 | NVIDIA 恢复时 `Swapchain for output 'eDP-1' failed test` | 切换 VT 或重启；属于合成器与驱动的恢复路径问题 |
+| `[include]` | `files = ["/usr/share/umbriel/config.toml"]` | 以包配置为基底 |
+| `[general]` | `autostart = ["noctalia"]` | 登录后拉起 shell，缺了就是黑屏加光标 |
+| `[output."eDP-1"]` | `scale = 1.5` | 内屏缩放 |
+| `[input.touchpad]` | `natural_scroll = true`、`tap = true` | 触控板方向与轻触 |
+| `[hot_corners.top_left]` | `delay_ms = 0` | 左上角触发角，零延迟 |
 
-## 限制
+## 快捷键
 
-- 合成器不绘制任何界面，shell 缺席时必然是黑屏，这属于设计而非故障。
-- 鼠标按键不能作为无修饰键的独立 chord。
-- `umbriel-nightly` 来自 terra、`noctalia-greeter-git` 来自 COPR，均为第三方仓库，跟上游 git 快照更新，行为可能随快照变化。需要稳定版本时改用 Fedora 仓库中的 `noctalia` 与 terra 的 `noctalia-greeter`。
-- 挂起恢复在 NVIDIA 上的失败需要从合成器侧解决，配置层面没有可靠规避手段。
+`Mod` = Super。文件同一位置：`~/.config/umbriel/config.toml` 的 `[keybinds]`。
+
+| 键 | 动作 |
+| --- | --- |
+| `Mod+Return`、`Mod+T` | 终端 ghostty |
+| `Mod+Space`、`Mod+D` | Noctalia 启动器 |
+| `Mod+S` / `Mod+V` / `Mod+Comma` | 控制中心 / 剪贴板 / 设置 |
+| `Alt+Tab` | 窗口切换器 |
+| `Mod+Shift+/` | 键位速查表 |
+| `Mod+Escape` | 快捷键抑制开关 |
+| `Mod+Shift+Escape`、`Mod+Shift+E`、`Ctrl+Alt+Delete` | 退出会话 |
+| `Super+Alt+L` | 锁屏 |
+| `Print` / `Ctrl+Print` / `Alt+Print` | 区域 / 全屏 / 窗口截图 |
+
+| 键 | 窗口 |
+| --- | --- |
+| `Mod+Q` / `Mod+Shift+Q` | 关闭 / 强制关闭 |
+| `Mod+F` / `Mod+Shift+F` | 最大化 / 全屏 |
+| `Mod+M` | 最大化到边缘 |
+| `Mod+P` | 置顶 |
+| `Mod+W` | 标签页分组 |
+| `Mod+O` | 工作区总览 |
+| `Mod+Alt+T` | 浮动 / 平铺切换 |
+| `Mod+Shift+V` | 在浮动层与平铺层间切焦点 |
+| `Mod+C` | 浮动窗口居中 |
+| `Mod+Alt+方向键` | 浮动窗口推到边缘 |
+| `Mod+Alt+-` / `Mod+Alt+=` | 浮动窗宽度 |
+| `Mod+Alt+Shift+-` / `+=` | 浮动窗高度 |
+
+| 键 | 焦点与移动 |
+| --- | --- |
+| `Mod+方向键`、`Mod+H/J/K/L` | 焦点移动 |
+| `Mod+F1` | 下一个窗口 |
+| `Mod+Home` / `Mod+End` | 首 / 末列 |
+| `Mod+Ctrl+方向键`、`Mod+Ctrl+H/J/K/L` | 移动列 / 窗口 |
+| `Mod+Ctrl+Home` / `Mod+Ctrl+End` | 列移到首 / 末 |
+| `Mod+[` / `Mod+]` / `Mod+.` | 吞并或拆出 |
+| `Mod+Shift+方向键`、`Mod+Shift+H/J/K/L` | 切显示器焦点 |
+| `Mod+Shift+Ctrl+方向键`、`Mod+Shift+Ctrl+H/J/K/L` | 列移到别的显示器 |
+
+| 键 | 尺寸 |
+| --- | --- |
+| `Mod+R` / `Mod+Shift+R` | 列宽预设循环 / 反向 |
+| `Mod+-` / `Mod+=` | 列宽 ±2% |
+| `Mod+Ctrl+-` / `Mod+Ctrl+=` | 列宽 ±10% |
+| `Mod+Shift+-` / `Mod+Shift+=` | 窗口高度 ±10% |
+| `Mod+Ctrl+Shift+R` | 窗口高度预设循环 |
+| `Mod+Ctrl+R` | 高度复位 |
+| `Mod+Ctrl+F` | 列撑满可用宽度 |
+| `Mod+Ctrl+C` | 列居中 |
+
+| 键 | 工作区 |
+| --- | --- |
+| `Mod+1` … `Mod+9` | 切换工作区 |
+| `Mod+Shift+1` … `Mod+Shift+9` | 窗口移到工作区 |
+| `Mod+Ctrl+1` … `Mod+Ctrl+9` | 整列移到工作区 |
+| `Mod+U` / `Mod+I`、`Mod+Page_Down` / `Mod+Page_Up` | 上 / 下切工作区 |
+| `Mod+Ctrl+U` / `Mod+Ctrl+I`、`Mod+Ctrl+Page_*` | 列移到上 / 下工作区 |
+| `Mod+Shift+U` / `Mod+Shift+I`、`Mod+Shift+Page_*` | 移动工作区本身 |
+| `Mod+滚轮` | 切工作区 |
+| `Mod+Ctrl+滚轮` | 列移到相邻工作区 |
+| `Mod+Shift+滚轮`、`Mod+滚轮左右` | 左右切焦点 |
+
+| 键 | 其他 |
+| --- | --- |
+| `Mod+Alt+Space` | scratchpad 开关 |
+| `Mod+Shift+Space` | 窗口移入 scratchpad |
+| `Mod+Ctrl+Space` | 从 scratchpad 恢复 |
+| `XF86Audio*`、`XF86MonBrightness*` | 音量 / 亮度，走 Noctalia OSD |
+
+## Noctalia
+
+设置用 GUI（`Mod+Comma`）或写 `~/.local/state/noctalia/settings.toml`；命令行：
+
+```bash
+noctalia msg status                       # 状态
+noctalia msg config-reload                # 重载设置
+noctalia msg settings-toggle              # 打开设置
+noctalia msg panel-toggle launcher        # 启动器
+noctalia msg session lock                 # 锁屏
+```
+
+## 侧键
+
+`BTN_SIDE` 映射为 `window-toggle-floating`，由用户级服务实现（Umbriel 的键位不接受无修饰键的鼠标键）：
+
+```bash
+systemctl --user status umbriel-sidekey
+systemctl --user restart umbriel-sidekey
+systemctl --user disable --now umbriel-sidekey   # 停用，恢复鼠标原样
+journalctl --user -u umbriel-sidekey -f
+```
+
+仅抓取指定鼠标，其余事件原样转发；服务随 `umbriel-session.target` 启动，不影响 Niri 会话。
+
+## 故障速查
+
+| 现象 | 原因 | 处理 |
+| --- | --- | --- |
+| 登录后黑屏只有光标 | 没有 `general.autostart` | 加 `autostart = ["noctalia"]` |
+| 滚动方向反 | `natural_scroll` 跟随 libinput | 设为 `true` |
+| 按 `Mod+Escape` 弹退出确认 | 默认绑定是退出会话 | 改绑 `shortcuts-inhibit-toggle` |
+| 更新后版本没变 | `~/.local/bin` 旧二进制遮蔽包版 | 软链指向 `/usr/bin/noctalia` |
+| 装稳定版 greeter 失败 | 与 git 版文件冲突 | `dnf swap` |
+| 挂起或切 VT 后黑屏 | NVIDIA 恢复时 swapchain 失败 | 切 VT 或重启 |
 
 ## 参考
 
-- [Umbriel 文档](https://docs.noctalia.dev/umbriel/)
-- [Umbriel 配置说明](https://docs.noctalia.dev/umbriel/configuration/)
+- [Umbriel 配置](https://docs.noctalia.dev/umbriel/configuration/)
 - [Umbriel 动作列表](https://docs.noctalia.dev/umbriel/actions/)
+- [Umbriel 键位](https://docs.noctalia.dev/umbriel/keybinds/)
 - [Noctalia 与 Umbriel 集成](https://docs.noctalia.dev/noctalia/compositor-settings/umbriel)
 - [Noctalia IPC](https://docs.noctalia.dev/noctalia/ipc/shell/)
