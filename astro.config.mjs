@@ -17,6 +17,10 @@ export default defineConfig({
   site: siteConfig.site,
   base: siteConfig.base,
   trailingSlash: 'ignore',
+  redirects: {
+    '/posts/linux/umbriel-noctalia': '/posts/linux/my-config',
+    '/posts/linux/dotfiles': '/posts/linux/my-config',
+  },
   compressHTML: true,
   build: {
     format: 'directory'
