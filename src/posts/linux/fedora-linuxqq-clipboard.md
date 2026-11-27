@@ -50,6 +50,7 @@ systemctl --user disable --now linuxqq-clipsync
 
 ## 参考
 
-- [linuxqq-clipsync](https://github.com/h465855hgg/linuxqq-clipsync)
 - [COPR：hrrzt/linuxqq-clipsync](https://copr.fedorainfracloud.org/coprs/hrrzt/linuxqq-clipsync/)
-- [linuxqq-wayland-fix](https://github.com/SHORiN-KiWATA/linuxqq-wayland-fix)
+- [linuxqq-clipsync](https://github.com/h465855hgg/linuxqq-clipsync)
+- [linuxqq-clipsync](https://github.com/W-874/linuxqq-clipsync)
+- [linuxqq-clipsync](https://github.com/SHORiN-KiWATA/linuxqq-clipsync)
