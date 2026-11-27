@@ -11,8 +11,29 @@ tags: [Linux, Fedora, Wayland]
 ```bash
 sudo dnf copr enable hrrzt/linuxqq-clipsync
 sudo dnf install linuxqq-clipsync
-systemctl --user enable --now linuxqq-clipsync
 ```
+
+## 常驻与自启动
+
+包内自带 systemd 用户服务，启用后随登录自动启动：
+
+```bash
+systemctl --user enable --now linuxqq-clipsync   # 立即启动，并设为登录自启
+systemctl --user status linuxqq-clipsync         # 查看状态
+journalctl --user -u linuxqq-clipsync -f         # 跟踪日志
+```
+
+服务文件为 `/usr/lib/systemd/user/linuxqq-clipsync.service`，`WantedBy=graphical-session.target`，在图形会话建立后启动；进程异常退出时 3 秒后自动拉起（`Restart=always`）。
+
+不需要 `loginctl enable-linger`：linger 用于“未登录也要运行”的服务，而剪贴板同步依赖图形会话。
+
+停止或取消自启：
+
+```bash
+systemctl --user disable --now linuxqq-clipsync
+```
+
+不用 systemd 时也可以直接运行 `linuxqq-clipsync`，自行加入桌面自启动；注意服务与手动运行只能留一个。
 
 ## 说明
 
