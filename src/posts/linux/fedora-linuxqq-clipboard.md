@@ -1,10 +1,25 @@
 ---
 title: "LinuxQQ 在 Wayland 下的剪贴板同步（Fedora）"
-description: "LinuxQQ 以 Wayland 运行时与系统剪贴板互不相通，用 linuxqq-clipsync 做双向同步。"
+description: "LinuxQQ 以 Wayland 运行时与系统剪贴板互不相通，用 linuxqq-clipsync 在两侧双向同步。"
 date: 2026-11-16
 updated: 2026-11-27
 tags: [Linux, Fedora, Wayland]
 ---
+
+## 概述
+
+LinuxQQ 以 Wayland（`--ozone-platform=wayland`）运行时，剪贴板与系统其它应用互不可见：QQ 里复制的文字、图片粘不出去，外面复制的也粘不进 QQ。原因是 QQ 的窗口是 Wayland 的，剪贴板操作仍走内部的 X11 client。
+
+[linuxqq-clipsync](https://github.com/h465855hgg/linuxqq-clipsync) 常驻监听两侧，把 X11 selection 与 Wayland 剪贴板的内容互相同步。它只处理剪贴板，不解决屏幕共享、截图等问题。
+
+## 环境
+
+| 项目 | 值 |
+| --- | --- |
+| 发行版 | Fedora 44 / 45 / rawhide（x86_64、aarch64） |
+| 桌面 | GNOME |
+| QQ | LinuxQQ 3.x，Wayland 模式启动 |
+| 依赖 | `xclip`、`wl-clipboard`（RPM 自动安装） |
 
 ## 安装
 
@@ -15,36 +30,36 @@ sudo dnf install linuxqq-clipsync
 
 ## 常驻与自启动
 
-包内自带 systemd 用户服务，启用后随登录自动启动：
+包内自带 systemd 用户服务，`WantedBy=graphical-session.target`，登录图形会话后启动：
 
 ```bash
-systemctl --user enable --now linuxqq-clipsync   # 立即启动，并设为登录自启
-systemctl --user status linuxqq-clipsync         # 查看状态
-journalctl --user -u linuxqq-clipsync -f         # 跟踪日志
+systemctl --user enable --now linuxqq-clipsync
+systemctl --user status linuxqq-clipsync
+journalctl --user -u linuxqq-clipsync -f
 ```
 
-服务文件为 `/usr/lib/systemd/user/linuxqq-clipsync.service`，`WantedBy=graphical-session.target`，在图形会话建立后启动；进程异常退出时 3 秒后自动拉起（`Restart=always`）。
+进程异常退出时 3 秒后自动拉起（`Restart=always`）。**不需要 `loginctl enable-linger`**：linger 用于未登录也要运行的服务，而剪贴板同步依赖图形会话。
 
-不需要 `loginctl enable-linger`：linger 用于“未登录也要运行”的服务，而剪贴板同步依赖图形会话。
-
-停止或取消自启：
+关闭自启：
 
 ```bash
 systemctl --user disable --now linuxqq-clipsync
 ```
 
-不用 systemd 时也可以直接运行 `linuxqq-clipsync`，自行加入桌面自启动；注意服务与手动运行只能留一个。
+不用 systemd 时可直接运行 `linuxqq-clipsync` 并自行加入自启动；服务与手动运行只能留一个。
 
-## 说明
+## 已知问题
 
-LinuxQQ 在 Wayland 下仍使用 X11 剪贴板，因此与 Wayland 应用双向粘贴失败。`linuxqq-clipsync` 常驻监听两侧，把剪贴板内容互相同步；0.1.0-2 起图片和 GIF 也能正常同步。
+**图片 / GIF 粘贴出来是文件路径**：旧版目标匹配把 `x-special/gnome-copied-files` 排在图片前面。0.1.0-2 起优先 `image/png`、`image/gif`，含动画 GIF。
 
-- 服务与手动运行只能留一个，否则两个实例会互抢剪贴板。
-- 延迟为毫秒级，极高频复制可能漏一次，重新复制即可。
-- 只处理剪贴板，不解决屏幕共享、截图等问题。
-- 上游已停止维护，继任项目为 `linuxqq-wayland-fix`；本 COPR 维护的是带修复的 fork。
+**X11 应用粘贴失效，日志出现 `读取 X11 TARGETS 失败`**：mutter 的 Xwayland 桥接接管 X11 `CLIPBOARD` 后不响应转换。0.1.0-2 起在写 Wayland 后回写 X11；同时确认只运行一个实例。
+
+**同步偶尔漏一次**：事件驱动，另有 200ms 防回声窗口，重新复制即可。
+
+**QQ 复制时闪退（`signo 13`）**：QQ 原生代码写已关闭管道触发 SIGPIPE，崩溃栈在 QQ 内部，与同步程序无直接关系；可用 X11 模式对照。
 
 ## 参考
 
-- 仓库：<https://github.com/h465855hgg/linuxqq-clipsync>
-- COPR：<https://copr.fedorainfracloud.org/coprs/hrrzt/linuxqq-clipsync/>
+- [linuxqq-clipsync](https://github.com/h465855hgg/linuxqq-clipsync)
+- [COPR：hrrzt/linuxqq-clipsync](https://copr.fedorainfracloud.org/coprs/hrrzt/linuxqq-clipsync/)
+- [linuxqq-wayland-fix](https://github.com/SHORiN-KiWATA/linuxqq-wayland-fix)
