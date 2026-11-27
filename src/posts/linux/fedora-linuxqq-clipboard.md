@@ -27,7 +27,7 @@ LinuxQQ 的窗口运行于 Wayland，但部分剪贴板操作仍由内部的 X11
 `linuxqq-clipsync` 由 Fedora COPR 提供，覆盖 Fedora 42–45 与 rawhide（x86_64、aarch64）：
 
 ```bash
-sudo dnf copr enable walker874/linuxqq-clipsync
+sudo dnf copr enable hrrzt/linuxqq-clipsync
 sudo dnf install linuxqq-clipsync
 ```
 
@@ -77,6 +77,6 @@ echo hello | wl-copy
 
 ## 注意
 
-- COPR 为第三方非官方仓库，启用前确认项目名为 `walker874/linuxqq-clipsync`。
+- COPR 为第三方非官方仓库，启用前确认项目名为 `hrrzt/linuxqq-clipsync`。
 - 同步为事件驱动加轮询，存在毫秒级延迟；极高频连续复制时可能漏一次，重新复制即可。
 - 若 QQ 通过 Flatpak 安装，同步程序运行于沙箱之外，通常仍有效；若失效，可先用 RPM 版本对照排查 Flatpak 的剪贴板权限。
