@@ -9,7 +9,7 @@ tags: [Linux, Fedora, Wayland]
 
 LinuxQQ 在 Wayland 会话下运行时，QQ 与系统剪贴板互不可见：在 QQ 内复制的内容无法粘贴到其他应用，其他应用复制的内容也无法粘贴到 QQ；图片与文件同样受影响。该问题在 X11 会话下不存在。
 
-在 Fedora 上可通过安装 `linuxqq-clipsync` 解决。该程序在 X11 与 Wayland 两侧剪贴板之间做双向同步。
+在 Fedora 上可通过安装 `hrrzt/linuxqq-clipsync` 解决。该程序在 X11 与 Wayland 两侧剪贴板之间做双向同步。
 
 ## 原理
 
@@ -24,7 +24,7 @@ LinuxQQ 的窗口运行于 Wayland，但部分剪贴板操作仍由内部的 X11
 
 ## 安装
 
-`linuxqq-clipsync` 由 Fedora COPR 提供，覆盖 Fedora 42–45 与 rawhide（x86_64、aarch64）：
+`linuxqq-clipsync` 由 Fedora COPR 提供，覆盖 Fedora 44–45 与 rawhide（x86_64、aarch64）：
 
 ```bash
 sudo dnf copr enable hrrzt/linuxqq-clipsync
@@ -43,24 +43,6 @@ systemctl --user status linuxqq-clipsync
 ```
 
 不使用 systemd 时可直接运行同名命令 `linuxqq-clipsync`，自行加入自启动。
-
-查看日志：
-
-```bash
-journalctl --user -u linuxqq-clipsync -f
-```
-
-## 验证
-
-按顺序执行三项测试：
-
-```bash
-# 1. QQ 内复制文字后，在终端读取
-wl-paste
-
-# 2. 终端写入剪贴板后，在 QQ 输入框粘贴
-echo hello | wl-copy
-```
 
 3. 使用截图工具复制图片，粘贴到 QQ 中。三项均通过即表示文本与图片同步均正常。
 
