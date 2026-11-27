@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const TIMEOUT = 7000
-const MAX_BYTES = 200 * 1024
+const MAX_BYTES = 512 * 1024
 const CACHE_FILE = path.join(process.cwd(), '.cache', 'link-previews.json')
 const pending = new Map()
 
